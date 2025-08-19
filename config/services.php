@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'system_params' => [
+        "currency" => "INR",
+    ]
+
 ];

@@ -46,6 +46,7 @@ class RetailorResource extends Resource
                                         $set('slug', Str::slug($state));
                                     }
                                 })
+
                                 ->live(onBlur: true)
                                 ->label('Name'),
 
@@ -60,7 +61,7 @@ class RetailorResource extends Resource
 
                             Forms\Components\Textarea::make('address')
                                 ->maxLength(255)
-                                ->columnSpan(2)
+                                ->columnSpanFull()
                                 ->label('Address'),
 
                             Forms\Components\Select::make('city')
@@ -154,49 +155,57 @@ class RetailorResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('logo')
+                    ->label('')
+                    ->size(50)
+                    ->circular()
+                    ->defaultImageUrl('https://ui-avatars.com/api/?name='),
+
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->label('Name'),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable()
-                    ->label('Slug'),
-                Tables\Columns\TextColumn::make('logo')
-                    ->searchable()
-                    ->label('Logo'),
-                Tables\Columns\TextColumn::make('address')
-                    ->searchable()
-                    ->label('Address'),
-                Tables\Columns\TextColumn::make('city')
-                    ->searchable()
-                    ->label('City'),
-                Tables\Columns\TextColumn::make('pincode')
-                    ->searchable()
-                    ->label('Pincode'),
+                    ->searchable(['name', 'city'])
+                    ->description(fn($record)=> "City: ". ucfirst($record->city) ?? "Na")
+                    ->sortable()
+                    ->label('Retailor Name')
+                    ->limit(25),
+
                 Tables\Columns\TextColumn::make('phone')
-                    ->searchable()
-                    ->label('Phone'),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->label('Email'),
-                Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Is Active'),
+                    ->searchable(["phone", "email"])
+                    ->label("Contact")
+                    ->description(fn($record)=> $record->email ?? "Na")
+                    ->icon('heroicon-o-phone'),
+
+
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn($state)=>ucfirst($state))
+                    ->colors([
+                        'warning' => 'pending',
+                        'success' => 'verified',
+                        'danger' => 'rejected',
+                    ])
                     ->label('Status'),
+
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Active'),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Updated At'),
+                    ->label('Created'),
             ])
             ->filters([
-
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Is Active'),
+                Tables\Filters\SelectFilter::make('city')
+                    ->options([
+                        'navsari' => 'Navsari',
+                        'surat' => 'Surat',
+                        'vadodara' => 'Vadodara',
+                        'valsad' => 'Valsad',
+                        'other' => 'Other',
+                    ])
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter by City'),
 
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
@@ -204,8 +213,116 @@ class RetailorResource extends Resource
                         'verified' => 'Verified',
                         'rejected' => 'Rejected',
                     ])
-                    ->label('Status'),
-            ]);
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter by Status'),
+
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active Status'),
+
+                Tables\Filters\Filter::make('created_date_range')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from')
+                            ->label('Created From'),
+                        Forms\Components\DatePicker::make('created_until')
+                            ->label('Created Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
+                            );
+                    })
+                    ->label('Created Date Range'),
+
+                Tables\Filters\Filter::make('pincode_search')
+                    ->form([
+                        Forms\Components\TextInput::make('pincode')
+                            ->label('Pincode')
+                            ->placeholder('Enter pincode to search'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['pincode'],
+                                fn(Builder $query, $pincode): Builder => $query->where('pincode', 'like', "%{$pincode}%"),
+                            );
+                    })
+                    ->label('Search by Pincode'),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()->label("")->tooltip("View")->size("lg"),
+                Tables\Actions\EditAction::make()->label("")->tooltip("Edit")->size("lg"),
+                Tables\Actions\DeleteAction::make()->label("")->tooltip("Delete")->size("lg"),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+
+                    Tables\Actions\BulkAction::make('activate')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->label('Activate Selected')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_active' => true]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->label('Deactivate Selected')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_active' => false]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('mark_verified')
+                        ->icon('heroicon-o-check-badge')
+                        ->color('success')
+                        ->label('Mark as Verified')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['status' => 'verified']);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('mark_pending')
+                        ->icon('heroicon-o-clock')
+                        ->color('warning')
+                        ->label('Mark as Pending')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['status' => 'pending']);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('mark_rejected')
+                        ->icon('heroicon-o-x-mark')
+                        ->color('danger')
+                        ->label('Mark as Rejected')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['status' => 'rejected']);
+                            });
+                        })
+                        ->requiresConfirmation(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->paginated([10, 25, 50, 100]);
     }
 
 
@@ -222,6 +339,7 @@ class RetailorResource extends Resource
             'index' => Pages\ListRetailors::route('/'),
             'create' => Pages\CreateRetailor::route('/create'),
             'edit' => Pages\EditRetailor::route('/{record}/edit'),
+            'view' => Pages\ViewRetailor::route('/{record}'),
         ];
     }
 }

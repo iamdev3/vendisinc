@@ -4,6 +4,8 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -38,22 +40,24 @@ class ProductResource extends Resource
                             ->placeholder('Enter Product Name')
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function(Set $set, $state, Model $record) {
-                                if($record){
-                                    $set('slug', Str::slug($state));
-                                }
-                            })
+                            // ->afterStateUpdated(function(Set $set, $state, Model $record) {
+                            //     if($record){
+                            //         $set('slug', Str::slug($state));
+                            //     }
+                            // })
                             ->label('Name'),
 
                         Forms\Components\Select::make('brand_id')
-                            ->relationship('brand', 'name')
+                            // ->relationship('brand', 'name')
+                            ->options(Brand::all()->pluck('name', 'id'))
                             ->searchable()
                             ->preload()
                             ->required()
                             ->label('Brand'),
 
                         Forms\Components\Select::make('category_id')
-                            ->relationship('category', 'name')
+                            // ->relationship('category', 'name')
+                            ->options(Category::all()->pluck('name', 'id'))
                             ->required()
                             ->preload()
                             ->searchable()
@@ -70,6 +74,7 @@ class ProductResource extends Resource
 
                         Forms\Components\Textarea::make('description')
                             ->maxLength(255)
+                            ->columnSpanFull()
                             ->placeholder('Enter Product Description : max 255 characters')
                             ->label('Product Description'),
 
@@ -80,11 +85,12 @@ class ProductResource extends Resource
 
                         Forms\Components\TextInput::make('base_price')
                             ->placeholder('E.g: 1000')
-                            ->numeric()
+                            ->prefix(config('services.system_params.currency'))
                             ->label('Base Price'),
 
                         Forms\Components\TextInput::make('sell_price')
                             ->numeric()
+                            ->prefix(config('services.system_params.currency'))
                             ->placeholder('E.g: 1500')
                             ->label('Sell Price'),
 
@@ -126,58 +132,154 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
+                // Tables\Columns\ImageColumn::make('image')
+                //     ->label('Image')
+                //     ->size(50)
+                //     ->circular(),
+
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->label('Name'),
-                Tables\Columns\TextColumn::make('brand_id')
+                    ->sortable()
+                    ->label('Product Name')
+                    ->limit(30),
+
+                Tables\Columns\TextColumn::make('brand.name')
                     ->searchable()
-                    ->label('Brand ID'),
-                Tables\Columns\TextColumn::make('category_id')
+                    ->sortable()
+                    ->label('Brand'),
+
+                Tables\Columns\TextColumn::make('category.name')
                     ->searchable()
-                    ->label('Category ID'),
-                Tables\Columns\TextColumn::make('description')
-                    ->searchable()
-                    ->label('Description'),
-                Tables\Columns\ImageColumn::make('image')
-                    ->label('Image'),
-                Tables\Columns\TextColumn::make('base_price')
-                    ->searchable()
-                    ->label('Base Price'),
+                    ->sortable()
+                    ->label('Category'),
+
                 Tables\Columns\TextColumn::make('sell_price')
-                    ->searchable()
-                    ->label('Sell Price'),
+                    ->money('INR')
+                    ->sortable()
+                    ->label('Price'),
+
                 Tables\Columns\TextColumn::make('quantity')
                     ->searchable()
+                    ->sortable()
                     ->label('Quantity'),
-                Tables\Columns\ToggleColumn::make('is_featured')
-                    ->label('Is Featured'),
-                Tables\Columns\ToggleColumn::make('is_popular')
-                    ->label('Is Popular'),
-                Tables\Columns\ToggleColumn::make('is_new')
-                    ->label('Is New'),
+
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label('Is Active'),
+                    ->label('Active'),
+
+                Tables\Columns\ToggleColumn::make('is_featured')
+                    ->label('Featured'),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Created At'),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Updated At'),
+                    ->label('Created'),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_featured')
-                    ->label('Is Featured'),
-                Tables\Filters\TernaryFilter::make('is_popular')
-                    ->label('Is Popular'),
-                Tables\Filters\TernaryFilter::make('is_new')
-                    ->label('Is New'),
+                Tables\Filters\SelectFilter::make('brand_id')
+                    ->relationship('brand', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter by Brand'),
+
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter by Category'),
+
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Is Active'),
-            ]);
+                    ->label('Active Status'),
+
+                Tables\Filters\TernaryFilter::make('is_featured')
+                    ->label('Featured Status'),
+
+                Tables\Filters\TernaryFilter::make('is_popular')
+                    ->label('Popular Status'),
+
+                Tables\Filters\TernaryFilter::make('is_new')
+                    ->label('New Status'),
+
+                Tables\Filters\Filter::make('price_range')
+                    ->form([
+                        Forms\Components\TextInput::make('min_price')
+                            ->numeric()
+                            ->placeholder('Min Price')
+                            ->label('Minimum Price'),
+                        Forms\Components\TextInput::make('max_price')
+                            ->numeric()
+                            ->placeholder('Max Price')
+                            ->label('Maximum Price'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_price'],
+                                fn(Builder $query, $minPrice): Builder => $query->where('sell_price', '>=', $minPrice),
+                            )
+                            ->when(
+                                $data['max_price'],
+                                fn(Builder $query, $maxPrice): Builder => $query->where('sell_price', '<=', $maxPrice),
+                            );
+                    })
+                    ->label('Price Range'),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()->label("")->tooltip("View")->size("lg"),
+                Tables\Actions\EditAction::make()->label("")->tooltip("Edit")->size("lg"),
+                Tables\Actions\DeleteAction::make()->label("")->tooltip("Delete")->size("lg"),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\BulkAction::make('activate')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->label('Activate Selected')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_active' => true]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('deactivate')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->label('Deactivate Selected')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_active' => false]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('mark_featured')
+                        ->icon('heroicon-o-star')
+                        ->color('warning')
+                        ->label('Mark as Featured')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_featured' => true]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+
+                    Tables\Actions\BulkAction::make('unmark_featured')
+                        ->icon('heroicon-o-star')
+                        ->color('gray')
+                        ->label('Remove Featured')
+                        ->action(function ($records) {
+                            $records->each(function ($record) {
+                                $record->update(['is_featured' => false]);
+                            });
+                        })
+                        ->requiresConfirmation(),
+                ]),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->paginated([10, 25, 50, 100]);
     }
 
     public static function getRelations(): array
@@ -193,6 +295,7 @@ class ProductResource extends Resource
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'view' => Pages\ViewProduct::route('/{record}'),
         ];
     }
 }

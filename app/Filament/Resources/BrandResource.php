@@ -21,7 +21,7 @@ class BrandResource extends Resource
 {
     protected static ?string $model = Brand::class;
     protected static ?string $navigationGroup = 'Brand Management';
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';  
+    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
 
     public static function form(Form $form): Form
     {
@@ -36,7 +36,7 @@ class BrandResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function(Get $get, Set $set, $state) {
+                            ->afterStateUpdated(function($operation, Get $get, Set $set, $state) {
                                 if($operation == 'create'){
                                     $set('slug', Str::slug($state));
                                 }
@@ -64,8 +64,9 @@ class BrandResource extends Resource
                             ->maxLength(255)
                             ->label('Slug'),
 
-                        Forms\Components\TextInput::make('address')
+                        Forms\Components\Textarea::make('address')
                             ->maxLength(255)
+                            ->columnSpanFull()
                             ->label('Address'),
 
                         Forms\Components\TextInput::make('city')
@@ -80,6 +81,11 @@ class BrandResource extends Resource
                             ->maxLength(255)
                             ->label('Website'),
 
+                    ])->columnSpan(2),
+
+                Forms\Components\Section::make('Additional Information')
+                    ->schema([
+
                         Forms\Components\FileUpload::make('logo')
                             ->image()
                             ->imageEditor()
@@ -90,11 +96,6 @@ class BrandResource extends Resource
                             ->placeholder("Upload a logo for the brand")
                             ->helperText("Accepted file types: jpeg, png, webp, Max Size : 2MB")
                             ->label('Logo'),
-
-                    ])->columnSpan(2),
-
-                Forms\Components\Section::make('Additional Information')
-                    ->schema([
 
                         Forms\Components\Textarea::make('description')
                             ->maxLength(255)
@@ -122,43 +123,34 @@ class BrandResource extends Resource
     {
         return $table
             ->columns([
+
+                Tables\Columns\ImageColumn::make('logo')
+                    ->grow(false)
+                    ->label("")
+                    ->circular(),
+
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable()
+                    ->searchable(['name', 'phone'])
+                    ->grow(false)
+                    ->description(fn(Brand $record) => $record->phone ?? 'N/A')
                     ->label('Name'),
-                Tables\Columns\TextColumn::make('slug')
-                    ->searchable()
-                    ->label('Slug'),
-                Tables\Columns\TextColumn::make('logo')
-                    ->searchable()
-                    ->label('Logo'),
-                Tables\Columns\TextColumn::make('address')
-                    ->searchable()
-                    ->label('Address'),
+
                 Tables\Columns\TextColumn::make('city')
                     ->searchable()
+                    ->grow()
+                    ->alignCenter()
                     ->label('City'),
-                Tables\Columns\TextColumn::make('pincode')
-                    ->searchable()
-                    ->label('Pincode'),
-                Tables\Columns\TextColumn::make('phone')
-                    ->searchable()
-                    ->label('Phone'),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->label('Email'),
-                Tables\Columns\TextColumn::make('website')
-                    ->searchable()
-                    ->label('Website'),
-                Tables\Columns\TextColumn::make('description')
-                    ->searchable()
-                    ->label('Description'),
+
                 Tables\Columns\ToggleColumn::make('is_active')
+                    // ->grow()
                     ->label('Is Active'),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->date("d-m-Y")
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Created At'),
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
@@ -168,6 +160,14 @@ class BrandResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Is Active'),
+            ])
+            ->bulkActions([
+            Tables\Actions\DeleteBulkAction::make()->label("")->tooltip("Delete Brand")->size("md"),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()->label("")->tooltip("View Brand")->size("md"),
+                Tables\Actions\EditAction::make()->label("")->tooltip("Edit Brand")->size("md"),
+                // Tables\Actions\DeleteAction::make()->label("")->tooltip("Delete Brand")->size("md"),
             ]);
     }
 
@@ -184,6 +184,7 @@ class BrandResource extends Resource
             'index' => Pages\ListBrands::route('/'),
             'create' => Pages\CreateBrand::route('/create'),
             'edit' => Pages\EditBrand::route('/{record}/edit'),
+            'view' => Pages\ViewBrand::route('/{record}'),
         ];
     }
 }

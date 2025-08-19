@@ -16,4 +16,14 @@ class EditBrand extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function mutateFormDataBeforeFill(array $data): array
+    {
+        // dump($data);
+        // if (isset($data['logo'])) {
+        //     $data['logo'] = basename($data['logo']);
+        // }
+        // dump($data['logo']);
+        return $data;
+    }
 }
