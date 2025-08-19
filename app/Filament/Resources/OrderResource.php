@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Enums\OrderStatus;
+use App\Models\Brand;
 use App\Models\Retailor;
 use Filament\Forms\Set;
 use Filament\Support\Enums\Alignment;
@@ -486,27 +487,17 @@ class OrderResource extends Resource
 
                 Tables\Columns\TextColumn::make('brand.name')
                     ->label('Brand')
+                    ->icon('heroicon-s-arrow-top-right-on-square')
+                    ->url(fn($record): string => BrandResource::getUrl("edit", ["record" => $record->brand_id]))
                     ->sortable()
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('retailor.name')
                     ->label('Retailer')
+                    ->icon('heroicon-s-arrow-top-right-on-square')
+                    ->url(fn($record): string => RetailorResource::getUrl("edit", ["record" => $record->retailor]))
                     ->sortable()
                     ->searchable(),
-
-                Tables\Columns\TextColumn::make('customer_name')
-                    ->searchable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('customer_phone')
-                    ->searchable()
-                    ->toggleable()
-                    ->toggledHiddenByDefault(),
-
-                Tables\Columns\TextColumn::make('quantity_ordered')
-                    ->label('Qty')
-                    ->numeric()
-                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total')
@@ -514,7 +505,8 @@ class OrderResource extends Resource
                     ->money(config("services.system_params.currency"))
                     ->sortable(),
 
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
                     ->colors([
                         'danger' => 'cancelled',
                         'warning' => 'pending',
@@ -558,10 +550,15 @@ class OrderResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+
                 Tables\Filters\SelectFilter::make('status')
+                    ->preload()
+                    ->searchable()
                     ->options(OrderStatus::getOptions()),
 
                 Tables\Filters\SelectFilter::make('payment_status')
+                    ->preload()
+                    ->searchable()
                     ->options([
                         'pending' => 'Pending',
                         'paid' => 'Paid',
@@ -585,6 +582,18 @@ class OrderResource extends Resource
                                 fn (Builder $query, $date): Builder => $query->whereDate('order_date', '<=', $date),
                             );
                     }),
+
+                Tables\Filters\SelectFilter::make('retailor_id')
+                    ->label("Filter by Retaioler")
+                    ->searchable()
+                    ->preload()
+                    ->options(Retailor::pluck('name', 'id')),
+
+                Tables\Filters\SelectFilter::make('brand_id')
+                    ->label("Filter by Brand")
+                    ->searchable()
+                    ->preload()
+                    ->options(Brand::pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
