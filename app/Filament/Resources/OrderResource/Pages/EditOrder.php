@@ -19,35 +19,44 @@ class EditOrder extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // dump($data);
-        //json store retailors details
-        $data['customer_information'] = [
-                'customer_name'     =>$data['customer_information']['customer_name'] ?? null,
-                'customer_phone'    =>$data['customer_information']['customer_phone'] ?? null,
-                'customer_email'    =>$data['customer_information']['customer_email'] ?? null,
-                'customer_address'  =>$data['customer_information']['customer_address'] ?? null,
+        // Handle customer_information JSON decoding
+        if (isset($data['customer_information']) && is_string($data['customer_information'])) {
+            $decodedCustomerInfo = json_decode($data['customer_information'], true);
+
+            // If decoding was successful and we have an array
+            if (is_array($decodedCustomerInfo)) {
+                $data['customer_information'] = $decodedCustomerInfo;
+
+            } else {
+                // If JSON decoding failed or data is malformed, set empty array
+                $data['customer_information'] = [
+                    'customer_name'     => null,
+                    'customer_phone'    => null,
+                    'customer_email'    => null,
+                    'customer_address'  => null,
+                ];
+            }
+
+        } elseif (!isset($data['customer_information'])) {
+            // If customer_information doesn't exist, create empty structure
+            $data['customer_information'] = [
+                'customer_name'     => null,
+                'customer_phone'    => null,
+                'customer_email'    => null,
+                'customer_address'  => null,
             ];
+        }
 
-        // Optionally, unset the flat fields so they don't get stored twice
-        unset(
-            $data['customer_name'],
-            $data['customer_phone'],
-            $data['customer_email'],
-            $data['customer_address']
-        );
-        // dd($data);
         return $data;
-
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // dd($data);
-        // Transform individual customer fields to JSON
-        if (isset($data['customer_information'])) {
+        // Transform customer_information array to JSON string for database storage
+        if (isset($data['customer_information']) && is_array($data['customer_information'])) {
             $data['customer_information'] = json_encode($data['customer_information']);
         }
-        // Transform individual order fields to
+
         return $data;
     }
 }

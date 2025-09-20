@@ -19,6 +19,9 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\SpatieLaravelTranslatablePlugin;
+use Filament\View\PanelsRenderHook;
+use Filament\Forms\Components\Select;
+use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -48,11 +51,11 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 SpatieLaravelTranslatablePlugin::make()
-                    ->defaultLocales(['en', 'gu']),
+                    ->defaultLocales(['en', 'gu']),              
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
+            ])           
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

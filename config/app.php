@@ -86,6 +86,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Available Locales
+    |--------------------------------------------------------------------------
+    |
+    | This array contains the available locales for your application.
+    | The key is the locale code and the value is the display name.
+    |
+    */
+
+    'available_locales' => [
+        'en' => 'English',
+        'gu' => 'ગુજરાતી',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

@@ -16,6 +16,8 @@ class Order extends Model
         'tax_amount'                => 'decimal:2',
         'discount_amount'           => 'decimal:2',
         'total_amount'              => 'decimal:2',
+        'total_profit'              => 'decimal:2',
+        'profit_margin'             => 'decimal:2',
         'order_date'                => 'datetime',
         'expected_delivery_date'    => 'datetime',
         'delivered_at'              => 'datetime',

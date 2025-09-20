@@ -1,14 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Controller;
 
 Route::get('/', function () {
-    // return view('welcome');
-    return redirect()->route('filament.admin.auth.login');
+    return view('welcome');
 });
 
-// AJAX route for fetching retailer details
-Route::get('/api/retailor-details', [Controller::class, 'getRetailorDetails'])->name('api.retailor-details');
-
-
+// Test translation route
+Route::get('/test-translation', function () {
+    return view('test-translation');
+});

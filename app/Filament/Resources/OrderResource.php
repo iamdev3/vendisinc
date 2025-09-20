@@ -39,12 +39,14 @@ class OrderResource extends Resource
                             ->preload()
                             ->live()
                             ->afterStateUpdated(function (Set $set, $state, $operation) {
-                                if ($operation == 'create') {
+                                if ($operation == 'create' && $state) {
                                     $retailorDetails = Retailor::find($state);
-                                    $set('customer_information.customer_name', $retailorDetails->name ?? null);
-                                    $set('customer_information.customer_phone', $retailorDetails->phone ?? null);
-                                    $set('customer_information.customer_email', $retailorDetails->email ?? null);
-                                    $set('customer_information.customer_address', $retailorDetails->address ?? null);
+                                    if ($retailorDetails) {
+                                        $set('customer_information.customer_name', $retailorDetails->name ?? null);
+                                        $set('customer_information.customer_phone', $retailorDetails->phone ?? null);
+                                        $set('customer_information.customer_email', $retailorDetails->email ?? null);
+                                        $set('customer_information.customer_address', $retailorDetails->address ?? null);
+                                    }
                                 }
                             })
                             ->disabledOn("edit")
@@ -94,6 +96,8 @@ class OrderResource extends Resource
 
                         Forms\Components\DateTimePicker::make('order_date')
                             ->native(false)
+                            ->label("Order Date")
+                            ->disabledOn("edit")
                             ->default(now())
                             ->prefixicon('heroicon-o-calendar')
                             ->required()
@@ -117,34 +121,34 @@ class OrderResource extends Resource
                         Forms\Components\Textarea::make('notes')
                             ->label("Note for Retailor")
                             ->rows(3),
-                            // ->columnSpanFull(),
+                        // ->columnSpanFull(),
 
                         Forms\Components\Textarea::make('internal_notes')
                             ->label("Internal Notes")
                             ->rows(3),
-                            // ->columnSpanFull(),
+                        // ->columnSpanFull(),
 
                         // Status fields - Stack on mobile, inline on desktop
                         // Group::make([
-                            Forms\Components\Radio::make('status')
-                                ->options(OrderStatus::getOptions())
-                                ->inline()
-                                ->inlinelabel(false)
-                                ->columnSpanFull()
-                                ->default(OrderStatus::CONFIRMED)
-                                ->required(),
+                        Forms\Components\Radio::make('status')
+                            ->options(OrderStatus::getOptions())
+                            ->inline()
+                            ->inlinelabel(false)
+                            ->columnSpanFull()
+                            ->default(OrderStatus::CONFIRMED)
+                            ->required(),
                         // ])->columnSpanFull(),
 
                         // Group::make([
-                            Forms\Components\Radio::make('payment_status')
-                                ->options([
-                                    'pending' => "Pending",
-                                    'paid'    => "Paid",
-                                ])
-                                ->default("pending")
-                                ->inline()
-                                ->inlineLabel(false)
-                                ->required(),
+                        Forms\Components\Radio::make('payment_status')
+                            ->options([
+                                'pending' => "Pending",
+                                'paid'    => "Paid",
+                            ])
+                            ->default("pending")
+                            ->inline()
+                            ->inlineLabel(false)
+                            ->required(),
                         // ])->columnSpanFull(),
 
                         Forms\Components\Select::make('payment_method')
@@ -178,10 +182,10 @@ class OrderResource extends Resource
                 // Customer Information - Full width on mobile, right side on desktop
                 Section::make('Customer Details')
                     ->schema([
-
-                        Forms\Components\TextInput::make('customer_name')
+                        Forms\Components\TextInput::make('customer_information.customer_name')
                             ->label("Customer Name")
                             ->prefixicon("heroicon-o-user")
+                            ->disabledOn("edit")
                             ->maxLength(255)
                             ->columnSpan([
                                 'sm' => 2,
@@ -189,9 +193,10 @@ class OrderResource extends Resource
                                 'lg' => 2,
                             ]),
 
-                        Forms\Components\TextInput::make('customer_phone')
+                        Forms\Components\TextInput::make('customer_information.customer_phone')
                             ->label("Customer Phone")
                             ->tel()
+                            ->disabledOn("edit")
                             ->prefixicon('heroicon-o-phone')
                             ->maxLength(255)
                             ->columnSpan([
@@ -200,19 +205,20 @@ class OrderResource extends Resource
                                 'lg' => 2,
                             ]),
 
-                        Forms\Components\TextInput::make('customer_email')
+                        Forms\Components\TextInput::make('customer_information.customer_email')
                             ->label("Customer Email")
                             ->email()
+                            ->disabledOn("edit")
                             ->prefixicon('heroicon-o-envelope')
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        Forms\Components\Textarea::make('customer_address')
+                        Forms\Components\Textarea::make('customer_information.customer_address')
                             ->label("Customer Address")
                             ->rows(3)
+                            ->disabledOn("edit")
                             ->columnSpanFull(),
                     ])
-                    ->statePath('customer_information')
                     ->columns([
                         'sm' => 2,
                         'md' => 2,
@@ -239,9 +245,17 @@ class OrderResource extends Resource
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         if ($state) {
                                             $product = \App\Models\Product::find($state);
-                                            $set('unit_price', $product->sell_price ?? 0);
+                                            $unitPrice = $product->sell_price ?? 0;
+                                            $basePrice = $product->base_price ?? 0;
                                             $quantity = $get('quantity') ?? 1;
-                                            $set('total_price', ($product->sell_price ?? 0) * $quantity);
+
+                                            $set('unit_price', $unitPrice);
+                                            $set('total_price', $unitPrice * $quantity);
+
+                                            // Calculate profit
+                                            $unitProfit = $unitPrice - $basePrice;
+                                            $set('unit_profit', $unitProfit);
+                                            $set('total_profit', $unitProfit * $quantity);
                                         }
                                     })
                                     ->columnSpan([
@@ -257,7 +271,11 @@ class OrderResource extends Resource
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         $unitPrice = $get('unit_price') ?? 0;
-                                        $set('total_price', $unitPrice * ($state ?? 1));
+                                        $unitProfit = $get('unit_profit') ?? 0;
+                                        $quantity = $state ?? 1;
+
+                                        $set('total_price', $unitPrice * $quantity);
+                                        $set('total_profit', $unitProfit * $quantity);
                                     })
                                     ->columnSpan([
                                         'sm' => 2,
@@ -273,7 +291,22 @@ class OrderResource extends Resource
                                     ->default(0.00)
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         $quantity = $get('quantity') ?? 1;
-                                        $set('total_price', ($state ?? 0) * $quantity);
+                                        $unitPrice = $state ?? 0;
+
+                                        // Get base price from selected product
+                                        $productId = $get('product_id');
+                                        $basePrice = 0;
+                                        if ($productId) {
+                                            $product = \App\Models\Product::find($productId);
+                                            $basePrice = $product->base_price ?? 0;
+                                        }
+
+                                        $set('total_price', $unitPrice * $quantity);
+
+                                        // Calculate profit
+                                        $unitProfit = $unitPrice - $basePrice;
+                                        $set('unit_profit', $unitProfit);
+                                        $set('total_profit', $unitProfit * $quantity);
                                     })
                                     ->columnSpan([
                                         'sm' => 2,
@@ -287,15 +320,39 @@ class OrderResource extends Resource
                                     ->dehydrated(true)
                                     ->prefix(config("services.system_params.currency"))
                                     ->columnSpan([
-                                        'sm' => 4,
-                                        'md' => 2,
+                                        'sm' => 2,
+                                        'md' => 1,
+                                        'lg' => 1,
+                                    ]),
+
+                                Forms\Components\TextInput::make('unit_profit')
+                                    ->label('Unit Profit')
+                                    ->numeric()
+                                    ->disabled()
+                                    ->dehydrated(true)
+                                    ->prefix(config("services.system_params.currency"))
+                                    ->columnSpan([
+                                        'sm' => 2,
+                                        'md' => 1,
+                                        'lg' => 1,
+                                    ]),
+
+                                Forms\Components\TextInput::make('total_profit')
+                                    ->label('Total Profit')
+                                    ->numeric()
+                                    ->disabled()
+                                    ->dehydrated(true)
+                                    ->prefix(config("services.system_params.currency"))
+                                    ->columnSpan([
+                                        'sm' => 2,
+                                        'md' => 1,
                                         'lg' => 1,
                                     ]),
                             ])
                             ->columns([
-                                'sm' => 4,
-                                'md' => 4,
-                                'lg' => 4,
+                                'sm' => 6,
+                                'md' => 6,
+                                'lg' => 6,
                             ])
                             ->relationship()
                             ->defaultItems(1)
@@ -406,17 +463,45 @@ class OrderResource extends Resource
                                 ->default(0.00)
                                 ->extraAttributes(['class' => 'font-bold'])
                                 ->columnSpan([
-                                    'sm' => 4,
-                                    'md' => 2,
-                                    'lg' => 2,
+                                    'sm' => 2,
+                                    'md' => 1,
+                                    'lg' => 1,
+                                ]),
+
+                            Forms\Components\TextInput::make('total_profit')
+                                ->label('Total Profit')
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated(true)
+                                ->prefix(config("services.system_params.currency"))
+                                ->default(0.00)
+                                ->extraAttributes(['class' => 'font-bold text-green-600'])
+                                ->columnSpan([
+                                    'sm' => 2,
+                                    'md' => 1,
+                                    'lg' => 1,
+                                ]),
+
+                            Forms\Components\TextInput::make('profit_margin')
+                                ->label('Profit Margin (%)')
+                                ->numeric()
+                                ->disabled()
+                                ->dehydrated(true)
+                                ->suffix('%')
+                                ->default(0.00)
+                                ->extraAttributes(['class' => 'font-bold text-green-600'])
+                                ->columnSpan([
+                                    'sm' => 2,
+                                    'md' => 1,
+                                    'lg' => 1,
                                 ]),
                         ])
-                        ->columns([
-                            'sm' => 4,
-                            'md' => 4,
-                            'lg' => 4,
-                        ])
-                        ->columnSpanFull(),
+                            ->columns([
+                                'sm' => 4,
+                                'md' => 4,
+                                'lg' => 4,
+                            ])
+                            ->columnSpanFull(),
                     ])
                     ->columnSpanFull(),
             ])
@@ -469,12 +554,38 @@ class OrderResource extends Resource
         // Ensure total amount is not negative
         $totalAmount = max(0, $totalAmount);
 
+        // Calculate total profit from order items
+        $totalProfit = collect($orderItems)->sum(function ($item) {
+            $unitPrice = isset($item['unit_price']) && is_numeric($item['unit_price'])
+                ? (float) $item['unit_price']
+                : 0;
+            $quantity = isset($item['quantity']) && is_numeric($item['quantity'])
+                ? (int) $item['quantity']
+                : 0;
+
+            // Get base price from product
+            $productId = $item['product_id'] ?? null;
+            $basePrice = 0;
+            if ($productId) {
+                $product = \App\Models\Product::find($productId);
+                $basePrice = $product->base_price ?? 0;
+            }
+
+            $unitProfit = $unitPrice - $basePrice;
+            return $unitProfit * $quantity;
+        });
+
+        // Calculate profit margin percentage
+        $profitMargin = $totalAmount > 0 ? ($totalProfit / $totalAmount) * 100 : 0;
+
         // Set all calculated values
         $set('quantity_ordered', $quantityOrdered);
         $set('subtotal', round($subtotal, 2));
         $set('tax_amount', round($taxAmount, 2));
         $set('discount_amount', round($discountAmount, 2));
         $set('total_amount', round($totalAmount, 2));
+        $set('total_profit', round($totalProfit, 2));
+        $set('profit_margin', round($profitMargin, 2));
     }
 
     public static function table(Table $table): Table
@@ -504,6 +615,22 @@ class OrderResource extends Resource
                     ->numeric()
                     ->money(config("services.system_params.currency"))
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('total_profit')
+                    ->label('Profit')
+                    ->numeric()
+                    ->money(config("services.system_params.currency"))
+                    ->color('success')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('profit_margin')
+                    ->label('Margin %')
+                    ->numeric()
+                    ->suffix('%')
+                    ->color('success')
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -575,11 +702,11 @@ class OrderResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('order_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('order_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('order_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('order_date', '<=', $date),
                             );
                     }),
 
