@@ -22,6 +22,7 @@ use Filament\SpatieLaravelTranslatablePlugin;
 use Filament\View\PanelsRenderHook;
 use Filament\Forms\Components\Select;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use App\Filament\Pages\Login;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -31,7 +32,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(Login::class,)
             ->passwordReset()
             ->brandName('Vendisync')
             ->colors([
