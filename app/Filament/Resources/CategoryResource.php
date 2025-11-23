@@ -2,13 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use App\Filament\Resources\CategoryResource\Pages\ListCategories;
+use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
+use App\Filament\Resources\CategoryResource\Pages\EditCategory;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,20 +32,20 @@ use TangoDevIt\FilamentEmojiPicker\EmojiPickerAction;
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-    protected static ?string $navigationGroup = 'Brand Management';
+    protected static string | \UnitEnum | null $navigationGroup = 'Brand Management';
     protected static? Int $navigationSort = 3;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Category Information')
+        return $schema
+            ->components([
+                Section::make('Category Information')
                     ->description("Basic Category Related Information")
                     ->columns(2)
                     ->schema([
 
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->reactive()
@@ -46,14 +57,14 @@ class CategoryResource extends Resource
                             })
                             ->label('Name'),
 
-                        Forms\Components\Select::make('parent_id')
+                        Select::make('parent_id')
                             ->options(Category::where('parent_id', null)->pluck('name', 'id'))
                             ->nullable()
                             ->searchable()
                             ->preload()
                             ->label('Parent ID'),
 
-                        Forms\Components\TextInput::make('icon')
+                        TextInput::make('icon')
                             ->maxLength(255)
                             ->suffixAction(EmojiPickerAction::make('emoji-title'))
                             ->regex('/^(?:[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}]|[\x{2764}]|[\x{FE0F}]|[\x{200D}])+$/u')
@@ -63,22 +74,22 @@ class CategoryResource extends Resource
                             ->helperText('Use the 😀 button to pick an emoji')
                             ->label('Icon'),
 
-                        Forms\Components\TextInput::make('slug')
+                        TextInput::make('slug')
                             ->required()
                             ->maxLength(255)
                             ->label('Slug'),
 
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->maxLength(255)
                             ->placeholder('Enter Description about 255 characters')
                             ->label('Description'),
 
-                        Forms\Components\Textarea::make('additional_info')
+                        Textarea::make('additional_info')
                             ->maxLength(150)
                             ->placeholder('Enter Additional Information about 150 characters')
                             ->label('Additional Information'),
 
-                        Forms\Components\Toggle::make('is_active')
+                        Toggle::make('is_active')
                             ->required()
                             ->label('Is Active'),
 
@@ -90,36 +101,36 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->label('Name'),
-                Tables\Columns\TextColumn::make('slug')
+                TextColumn::make('slug')
                     ->searchable()
                     ->label('Slug'),
-                Tables\Columns\TextColumn::make('icon')
+                TextColumn::make('icon')
                     ->searchable()
                     ->label('Icon'),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->searchable()
                     ->label('Description'),
-                Tables\Columns\TextColumn::make('parent_id')
+                TextColumn::make('parent_id')
                     ->searchable()
                     ->label('Parent ID'),
-                Tables\Columns\ToggleColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('Is Active'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Created At'),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Updated At'),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label('Is Active'),
             ]);
     }
@@ -134,9 +145,9 @@ class CategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCategories::route('/'),
-            'create' => Pages\CreateCategory::route('/create'),
-            'edit' => Pages\EditCategory::route('/{record}/edit'),
+            'index' => ListCategories::route('/'),
+            'create' => CreateCategory::route('/create'),
+            'edit' => EditCategory::route('/{record}/edit'),
         ];
     }
 }

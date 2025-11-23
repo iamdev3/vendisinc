@@ -2,20 +2,23 @@
 
 namespace App\Filament\Resources\RetailorResource\Pages;
 
+use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
+use Filament\Actions\DeleteAction;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use App\Filament\Resources\RetailorResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditRetailor extends EditRecord
 {
-    use EditRecord\Concerns\Translatable;
+    use Translatable;
     protected static string $resource = RetailorResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\LocaleSwitcher::make(),
+            DeleteAction::make(),
+            LocaleSwitcher::make(),
         ];
     }
 

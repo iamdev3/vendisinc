@@ -2,17 +2,34 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use App\Filament\Resources\BrandResource\Pages\ListBrands;
+use App\Filament\Resources\BrandResource\Pages\CreateBrand;
+use App\Filament\Resources\BrandResource\Pages\EditBrand;
+use App\Filament\Resources\BrandResource\Pages\ViewBrand;
 use App\Filament\Resources\BrandResource\Pages;
 use App\Filament\Resources\BrandResource\RelationManagers;
 use App\Models\Brand;
 use Closure;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
@@ -20,19 +37,21 @@ use Illuminate\Support\Str;
 class BrandResource extends Resource
 {
     protected static ?string $model = Brand::class;
-    protected static ?string $navigationGroup = 'Brand Management';
-    protected static ?string $navigationIcon = 'heroicon-o-briefcase';
+    protected static string | \UnitEnum | null $navigationGroup = 'Brand Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-briefcase';
 
-    public static function form(Form $form): Form
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Section::make('Brand Information')
+        return $schema
+            ->components([
+                Section::make('Brand Information')
                     ->description("Basic Brand Related Information")
                     ->columns(2)
                     ->schema([
 
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -43,19 +62,19 @@ class BrandResource extends Resource
                             })
                             ->label('Name'),
 
-                        Forms\Components\TextInput::make('phone')
+                        TextInput::make('phone')
                             ->tel()
                             ->prefixIcon('heroicon-o-phone')
                             ->maxLength(255)
                             ->label('Phone'),
 
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->prefixIcon('heroicon-o-envelope')
                             ->email()
                             ->maxLength(255)
                             ->label('Email'),
 
-                        Forms\Components\TextInput::make('slug')
+                        TextInput::make('slug')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->disabledOn('edit')
@@ -64,29 +83,29 @@ class BrandResource extends Resource
                             ->maxLength(255)
                             ->label('Slug'),
 
-                        Forms\Components\Textarea::make('address')
+                        Textarea::make('address')
                             ->maxLength(255)
                             ->columnSpanFull()
                             ->label('Address'),
 
-                        Forms\Components\TextInput::make('city')
+                        TextInput::make('city')
                             ->maxLength(255)
                             ->label('City'),
 
-                        Forms\Components\TextInput::make('pincode')
+                        TextInput::make('pincode')
                             ->maxLength(255)
                             ->label('Pincode'),
 
-                        Forms\Components\TextInput::make('website')
+                        TextInput::make('website')
                             ->maxLength(255)
                             ->label('Website'),
 
                     ])->columnSpan(2),
 
-                Forms\Components\Section::make('Additional Information')
+                Section::make('Additional Information')
                     ->schema([
 
-                        Forms\Components\FileUpload::make('logo')
+                        FileUpload::make('logo')
                             ->image()
                             ->imageEditor()
                             ->directory('brands')
@@ -97,7 +116,7 @@ class BrandResource extends Resource
                             ->helperText("Accepted file types: jpeg, png, webp, Max Size : 2MB")
                             ->label('Logo'),
 
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->maxLength(255)
                             ->columnSpanFull()
                             ->rows(4)
@@ -105,12 +124,12 @@ class BrandResource extends Resource
                             ->placeholder("Enter a description for the brand, Max length 500 characters")
                             ->label('Description'),
 
-                        Forms\Components\Textarea::make('additional_info')
+                        Textarea::make('additional_info')
                             ->maxLength(500)
                             ->columnSpanFull()
                             ->label('Additional Information'),
 
-                        Forms\Components\Toggle::make('is_active')
+                        Toggle::make('is_active')
                             ->required()
                             ->default(true)
                             ->label('Is Active'),
@@ -124,49 +143,49 @@ class BrandResource extends Resource
         return $table
             ->columns([
 
-                Tables\Columns\ImageColumn::make('logo')
+                ImageColumn::make('logo')
                     ->grow(false)
                     ->label("")
                     ->circular(),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(['name', 'phone'])
                     ->grow(false)
                     ->description(fn(Brand $record) => $record->phone ?? 'N/A')
                     ->label('Name'),
 
-                Tables\Columns\TextColumn::make('city')
+                TextColumn::make('city')
                     ->searchable()
                     ->grow()
                     ->alignCenter()
                     ->label('City'),
 
-                Tables\Columns\ToggleColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     // ->grow()
                     ->label('Is Active'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->date("d-m-Y")
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Created At'),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Updated At'),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label('Is Active'),
             ])
-            ->bulkActions([
-            Tables\Actions\DeleteBulkAction::make()->label("")->tooltip("Delete Brand")->size("md"),
+            ->toolbarActions([
+                DeleteBulkAction::make()->label("")->tooltip("Delete Brand")->size("md"),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()->label("")->tooltip("View Brand")->size("md"),
-                Tables\Actions\EditAction::make()->label("")->tooltip("Edit Brand")->size("md"),
+            ->recordActions([
+                ViewAction::make()->label("")->tooltip("View Brand")->size("lg"),
+                EditAction::make()->label("")->tooltip("Edit Brand")->size("lg"),
                 // Tables\Actions\DeleteAction::make()->label("")->tooltip("Delete Brand")->size("md"),
             ]);
     }
@@ -174,17 +193,18 @@ class BrandResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ProductsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBrands::route('/'),
-            'create' => Pages\CreateBrand::route('/create'),
-            'edit' => Pages\EditBrand::route('/{record}/edit'),
-            'view' => Pages\ViewBrand::route('/{record}'),
+            'index' => ListBrands::route('/'),
+            'create' => CreateBrand::route('/create'),
+            'edit' => EditBrand::route('/{record}/edit'),
+            'view' => ViewBrand::route('/{record}'),
         ];
     }
+
 }

@@ -2,14 +2,34 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Repeater;
+use App\Models\Product;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Group;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\OrderResource\Pages\EditOrder;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
 use Filament\Forms;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,23 +38,22 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Enums\OrderStatus;
 use App\Models\Brand;
 use App\Models\Retailor;
-use Filament\Forms\Set;
 use Filament\Support\Enums\Alignment;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
-    protected static ?string $navigationGroup = "Orders";
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \UnitEnum | null $navigationGroup = "Orders";
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 // Primary Order Information - Full width on mobile, left side on desktop
                 Section::make('Order Information')
                     ->schema([
-                        Forms\Components\Select::make('retailer_id')
+                        Select::make('retailer_id')
                             ->relationship('retailor', 'name')
                             ->preload()
                             ->live()
@@ -58,7 +77,7 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\TextInput::make('order_number')
+                        TextInput::make('order_number')
                             ->required()
                             ->disabledOn("edit")
                             ->visibleOn("edit")
@@ -69,7 +88,7 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\Select::make('user_id')
+                        Select::make('user_id')
                             ->relationship('user', 'name')
                             ->disabledOn("edit")
                             ->visibleOn("edit")
@@ -80,7 +99,7 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\Select::make('brand_id')
+                        Select::make('brand_id')
                             ->label("Brand")
                             ->required()
                             ->preload()
@@ -94,7 +113,7 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\DateTimePicker::make('order_date')
+                        DateTimePicker::make('order_date')
                             ->native(false)
                             ->label("Order Date")
                             ->disabledOn("edit")
@@ -107,7 +126,7 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\DateTimePicker::make('delivered_at')
+                        DateTimePicker::make('delivered_at')
                             ->disabledOn("create")
                             ->label("Delivered Date")
                             ->native(false)
@@ -118,19 +137,19 @@ class OrderResource extends Resource
                                 'lg' => 1,
                             ]),
 
-                        Forms\Components\Textarea::make('notes')
+                        Textarea::make('notes')
                             ->label("Note for Retailor")
                             ->rows(3),
                         // ->columnSpanFull(),
 
-                        Forms\Components\Textarea::make('internal_notes')
+                        Textarea::make('internal_notes')
                             ->label("Internal Notes")
                             ->rows(3),
                         // ->columnSpanFull(),
 
                         // Status fields - Stack on mobile, inline on desktop
                         // Group::make([
-                        Forms\Components\Radio::make('status')
+                        Radio::make('status')
                             ->options(OrderStatus::getOptions())
                             ->inline()
                             ->inlinelabel(false)
@@ -140,7 +159,7 @@ class OrderResource extends Resource
                         // ])->columnSpanFull(),
 
                         // Group::make([
-                        Forms\Components\Radio::make('payment_status')
+                        Radio::make('payment_status')
                             ->options([
                                 'pending' => "Pending",
                                 'paid'    => "Paid",
@@ -151,7 +170,7 @@ class OrderResource extends Resource
                             ->required(),
                         // ])->columnSpanFull(),
 
-                        Forms\Components\Select::make('payment_method')
+                        Select::make('payment_method')
                             ->label("Payment Method")
                             ->preload()
                             ->searchable()
@@ -182,7 +201,7 @@ class OrderResource extends Resource
                 // Customer Information - Full width on mobile, right side on desktop
                 Section::make('Customer Details')
                     ->schema([
-                        Forms\Components\TextInput::make('customer_information.customer_name')
+                        TextInput::make('customer_information.customer_name')
                             ->label("Customer Name")
                             ->prefixicon("heroicon-o-user")
                             ->disabledOn("edit")
@@ -193,7 +212,7 @@ class OrderResource extends Resource
                                 'lg' => 2,
                             ]),
 
-                        Forms\Components\TextInput::make('customer_information.customer_phone')
+                        TextInput::make('customer_information.customer_phone')
                             ->label("Customer Phone")
                             ->tel()
                             ->disabledOn("edit")
@@ -205,7 +224,7 @@ class OrderResource extends Resource
                                 'lg' => 2,
                             ]),
 
-                        Forms\Components\TextInput::make('customer_information.customer_email')
+                        TextInput::make('customer_information.customer_email')
                             ->label("Customer Email")
                             ->email()
                             ->disabledOn("edit")
@@ -213,7 +232,7 @@ class OrderResource extends Resource
                             ->maxLength(255)
                             ->columnSpanFull(),
 
-                        Forms\Components\Textarea::make('customer_information.customer_address')
+                        Textarea::make('customer_information.customer_address')
                             ->label("Customer Address")
                             ->rows(3)
                             ->disabledOn("edit")
@@ -233,18 +252,18 @@ class OrderResource extends Resource
                 // Order Items - Always full width
                 Section::make('Order Items')
                     ->schema([
-                        Forms\Components\Repeater::make('orderItems')
+                        Repeater::make('orderItems')
                             ->schema([
-                                Forms\Components\Select::make('product_id')
+                                Select::make('product_id')
                                     ->label('Product')
-                                    ->options(\App\Models\Product::all()->pluck('name', 'id'))
+                                    ->options(Product::all()->pluck('name', 'id'))
                                     ->required()
                                     ->preload()
                                     ->searchable()
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         if ($state) {
-                                            $product = \App\Models\Product::find($state);
+                                            $product = Product::find($state);
                                             $unitPrice = $product->sell_price ?? 0;
                                             $basePrice = $product->base_price ?? 0;
                                             $quantity = $get('quantity') ?? 1;
@@ -264,7 +283,7 @@ class OrderResource extends Resource
                                         'lg' => 1,
                                     ]),
 
-                                Forms\Components\TextInput::make('quantity')
+                                TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
                                     ->required()
@@ -283,7 +302,7 @@ class OrderResource extends Resource
                                         'lg' => 1,
                                     ]),
 
-                                Forms\Components\TextInput::make('unit_price')
+                                TextInput::make('unit_price')
                                     ->numeric()
                                     ->step(0.01)
                                     ->prefix(config("services.system_params.currency"))
@@ -297,7 +316,7 @@ class OrderResource extends Resource
                                         $productId = $get('product_id');
                                         $basePrice = 0;
                                         if ($productId) {
-                                            $product = \App\Models\Product::find($productId);
+                                            $product = Product::find($productId);
                                             $basePrice = $product->base_price ?? 0;
                                         }
 
@@ -314,7 +333,7 @@ class OrderResource extends Resource
                                         'lg' => 1,
                                     ]),
 
-                                Forms\Components\TextInput::make('total_price')
+                                TextInput::make('total_price')
                                     ->numeric()
                                     ->disabled()
                                     ->dehydrated(true)
@@ -325,7 +344,7 @@ class OrderResource extends Resource
                                         'lg' => 1,
                                     ]),
 
-                                Forms\Components\TextInput::make('unit_profit')
+                                TextInput::make('unit_profit')
                                     ->label('Unit Profit')
                                     ->numeric()
                                     ->disabled()
@@ -337,7 +356,7 @@ class OrderResource extends Resource
                                         'lg' => 1,
                                     ]),
 
-                                Forms\Components\TextInput::make('total_profit')
+                                TextInput::make('total_profit')
                                     ->label('Total Profit')
                                     ->numeric()
                                     ->disabled()
@@ -367,7 +386,7 @@ class OrderResource extends Resource
 
                         // Totals Section - Responsive grid
                         Group::make([
-                            Forms\Components\TextInput::make('quantity_ordered')
+                            TextInput::make('quantity_ordered')
                                 ->label('Total Quantity')
                                 ->numeric()
                                 ->disabled()
@@ -379,7 +398,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('subtotal')
+                            TextInput::make('subtotal')
                                 ->label('Subtotal')
                                 ->numeric()
                                 ->disabled()
@@ -392,7 +411,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('tax_percent')
+                            TextInput::make('tax_percent')
                                 ->label('Tax (%)')
                                 ->numeric()
                                 ->step(0.01)
@@ -410,7 +429,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('tax_amount')
+                            TextInput::make('tax_amount')
                                 ->label('Tax Amount')
                                 ->numeric()
                                 ->disabled()
@@ -423,7 +442,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('discount_percent')
+                            TextInput::make('discount_percent')
                                 ->label('Discount (%)')
                                 ->numeric()
                                 ->step(0.01)
@@ -441,7 +460,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('discount_amount')
+                            TextInput::make('discount_amount')
                                 ->label('Discount Amount')
                                 ->numeric()
                                 ->disabled()
@@ -454,7 +473,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('total_amount')
+                            TextInput::make('total_amount')
                                 ->label('Total Amount')
                                 ->numeric()
                                 ->disabled()
@@ -468,7 +487,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('total_profit')
+                            TextInput::make('total_profit')
                                 ->label('Total Profit')
                                 ->numeric()
                                 ->disabled()
@@ -482,7 +501,7 @@ class OrderResource extends Resource
                                     'lg' => 1,
                                 ]),
 
-                            Forms\Components\TextInput::make('profit_margin')
+                            TextInput::make('profit_margin')
                                 ->label('Profit Margin (%)')
                                 ->numeric()
                                 ->disabled()
@@ -567,7 +586,7 @@ class OrderResource extends Resource
             $productId = $item['product_id'] ?? null;
             $basePrice = 0;
             if ($productId) {
-                $product = \App\Models\Product::find($productId);
+                $product = Product::find($productId);
                 $basePrice = $product->base_price ?? 0;
             }
 
@@ -592,31 +611,31 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
+                TextColumn::make('order_number')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('brand.name')
+                TextColumn::make('brand.name')
                     ->label('Brand')
                     ->icon('heroicon-s-arrow-top-right-on-square')
                     ->url(fn($record): string => BrandResource::getUrl("edit", ["record" => $record->brand_id]))
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('retailor.name')
+                TextColumn::make('retailor.name')
                     ->label('Retailer')
                     ->icon('heroicon-s-arrow-top-right-on-square')
                     ->url(fn($record): string => RetailorResource::getUrl("edit", ["record" => $record->retailor]))
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->label('Total')
                     ->numeric()
                     ->money(config("services.system_params.currency"))
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('total_profit')
+                TextColumn::make('total_profit')
                     ->label('Profit')
                     ->numeric()
                     ->money(config("services.system_params.currency"))
@@ -624,7 +643,7 @@ class OrderResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('profit_margin')
+                TextColumn::make('profit_margin')
                     ->label('Margin %')
                     ->numeric()
                     ->suffix('%')
@@ -632,7 +651,7 @@ class OrderResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->colors([
                         'danger' => 'cancelled',
@@ -642,35 +661,35 @@ class OrderResource extends Resource
                         'success' => 'delivered',
                     ]),
 
-                Tables\Columns\BadgeColumn::make('payment_status')
+                BadgeColumn::make('payment_status')
                     ->colors([
                         'warning' => 'pending',
                         'success' => 'paid',
                     ])
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('order_date')
+                TextColumn::make('order_date')
                     ->dateTime('M j, Y')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('delivered_at')
+                TextColumn::make('delivered_at')
                     ->label('Delivered')
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable()
                     ->toggledHiddenByDefault(),
 
-                Tables\Columns\TextColumn::make('user.name')
+                TextColumn::make('user.name')
                     ->label('Created By')
                     ->toggleable()
                     ->toggledHiddenByDefault(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -678,12 +697,12 @@ class OrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
 
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->preload()
                     ->searchable()
                     ->options(OrderStatus::getOptions()),
 
-                Tables\Filters\SelectFilter::make('payment_status')
+                SelectFilter::make('payment_status')
                     ->preload()
                     ->searchable()
                     ->options([
@@ -691,11 +710,11 @@ class OrderResource extends Resource
                         'paid' => 'Paid',
                     ]),
 
-                Tables\Filters\Filter::make('order_date')
-                    ->form([
-                        Forms\Components\DatePicker::make('from')
+                Filter::make('order_date')
+                    ->schema([
+                        DatePicker::make('from')
                             ->label('From Date'),
-                        Forms\Components\DatePicker::make('until')
+                        DatePicker::make('until')
                             ->label('Until Date'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -710,29 +729,29 @@ class OrderResource extends Resource
                             );
                     }),
 
-                Tables\Filters\SelectFilter::make('retailor_id')
+                SelectFilter::make('retailor_id')
                     ->label("Filter by Retaioler")
                     ->searchable()
                     ->preload()
                     ->options(Retailor::pluck('name', 'id')),
 
-                Tables\Filters\SelectFilter::make('brand_id')
+                SelectFilter::make('brand_id')
                     ->label("Filter by Brand")
                     ->searchable()
                     ->preload()
                     ->options(Brand::pluck('name', 'id')),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
+            ->recordActions([
+                ViewAction::make()
                     ->hiddenLabel()
                     ->tooltip('View'),
-                Tables\Actions\EditAction::make()
+                EditAction::make()
                     ->hiddenLabel()
                     ->tooltip('Edit'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No orders found')
@@ -749,9 +768,9 @@ class OrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'index' => ListOrders::route('/'),
+            'create' => CreateOrder::route('/create'),
+            'edit' => EditOrder::route('/{record}/edit'),
         ];
     }
 }

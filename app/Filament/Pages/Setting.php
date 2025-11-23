@@ -2,121 +2,113 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Pages\Page;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Components\Tabs;
+use App\Helpers\FormFieldBuilder;
+use App\Models\Setting as ModelsSetting;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Actions\Action;
-use Filament\Forms\Components\Section;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
+use UnitEnum;
 
-class Setting extends Page implements HasForms
+class Setting extends Page
 {
+    protected string $view = 'filament.pages.setting';
+    protected static string | BackedEnum | null $navigationIcon = "heroicon-o-cog";
+    protected static string | UnitEnum | null $navigationGroup = "Settings";
+    protected ?string $subheading = 'Manage all app related settings here';
 
-    use InteractsWithForms;
+    public ?array $data = [];
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog';
-    protected static ?string $navigationLabel = 'Setting';
-    protected static ?string $navigationGroup = 'Setting';
-    protected static ?int $navigationSort = 1;
-
-    protected ?string $heading = "App Setting";
-    protected ?string $subheading = "Manage all basic app setting";
-
-    protected static string $view = 'filament.pages.setting';
-
-    public static function canAccess():bool{
-        // return auth()->user()->hasRole(['admin','super-admin']);
-        return true;
+    public function mount(): void
+    {
+        $settings = ModelsSetting::pluck('value', 'key')->toArray();
+        $this->form->fill($settings);
     }
 
-    //public livewire property to access form
-    public ?array $setting = [];
+    public function form(Schema $schema): Schema
+    {   
+        #Get all sections from config
+        $configSections = config('app-settings.sections');
 
-    public function mount():void{
-
-        $configSetting = config("app-settings");
-
-        // foreach ($config as $key => $section) {
-        //     foreach($section['tab'] as $tab) {
-
-
-
-        //     }
-
-        // }
-
-        $this->form->fill();
-    }
-
-    public function form(Form $form): Form{
-
-        return $form
-        ->schema([
-
-            Section::make('Heading')
-                ->description('')
-                ->schema([
-
-
-            Tabs::make("Tabs")
-                ->tabs([
-
-                    Tabs\Tab::make('general_settings')
-                    ->schema([
-
-                        TextInput::make('app_name')
-                            ->label(__('App Name'))
-                            ->placeholder('Enter App Name')
-                            ->nullable(),
-
-                        TextInput::make('app_email')
-                            ->label(__('Email'))
-                            ->required(),
-
-                        TextInput::make('app_phone')
-                            ->label(__('Phone'))
-                            ->required(),
-
+        return $schema
+                ->components([
+                    Form::make([
+                        // Use our helper to build tabs from config
+                        FormFieldBuilder::buildTabsFromConfig($configSections),
+                    ])
+                    ->footer([
+                        Actions::make([
+                            Action::make('save')
+                                ->label('Save Settings')
+                                ->action(fn()=> $this->save()),
+                        ]),
                     ]),
-
-                    Tabs\Tab::make('app_social')
-                        ->schema([
-
-                            TextInput::make('app_facebook')
-                                ->label(__('Facebook'))
-                                ->nullable(),
-
-                            TextInput::make('app_twitter')
-                                ->label(__('Twitter'))
-                                ->nullable(),
-
-                            TextInput::make('app_instagram')
-                                ->label(__('Instagram'))
-                        ])
-
-                        ])
-
-                ])->footerActions([
-                        Action::make('save')
-                            ->label('Save Settings')
-                            ->button()
-                            ->action(fn () => $this->save()), // ✅ Fix here
-                ]),
-
-
-        ])
-        ->statePath('setting');
-
+                ])
+                ->statePath('data');
     }
 
-    public function save(){
-        dd($this->setting);
-
-        foreach($this->setting as $key => $value){
-            dump($key, $value);
+    /**
+     * Build a map of field keys to their group names
+     * This allows us to know which group each field belongs to when saving
+     * 
+     * @return array - ['site_name' => 'general_settings', 'smtp_host' => 'mail', ...]
+     */
+    private function getFieldGroupMap(): array
+    {
+        static $map = null;
+        
+        // Build map only once and cache it
+        if ($map === null) {
+            $map = [];
+            $configSections = config('app-settings.sections');
+            
+            // Loop through each section and its fields
+            foreach ($configSections as $groupName => $sectionData) {
+                foreach ($sectionData['fields'] as $fieldConfig) {
+                    // Map field key to group name
+                    $map[$fieldConfig['key']] = $groupName;
+                }
+            }
         }
+        
+        return $map;
     }
 
+    public function save(): void
+    {
+        $data = $this->form->getState();
+
+        // Get field-to-group mapping
+        $fieldGroupMap = $this->getFieldGroupMap();
+
+        // dd($data);
+        // Save each field with its group
+        foreach ($data as $key => $value) {
+            ModelsSetting::updateOrCreate(
+                ['key' => $key],
+                [
+                    'value' => $value ?? null,
+                    'group' => $fieldGroupMap[$key] ?? 'default',  // ✅ Get group from map
+                ]
+            );
+        }
+
+        #generate inapp config (settings.php)
+        ModelsSetting::generateConfig();
+
+        Notification::make()
+            ->success()
+            ->title("Settings Saved Successfully")
+            // ->body("Your settings have been saved successfully.")
+            ->send();
+    }
 }

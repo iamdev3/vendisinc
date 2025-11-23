@@ -2,21 +2,45 @@
 
 namespace App\Filament\Resources;
 
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Resources\RetailorResource\Pages\ListRetailors;
+use App\Filament\Resources\RetailorResource\Pages\CreateRetailor;
+use App\Filament\Resources\RetailorResource\Pages\EditRetailor;
+use App\Filament\Resources\RetailorResource\Pages\ViewRetailor;
 use App\Filament\Resources\RetailorResource\Pages;
 use App\Filament\Resources\RetailorResource\RelationManagers;
 use App\Models\Retailor;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
-use Filament\Resources\Concerns\Translatable;
 
 class RetailorResource extends Resource
 {
@@ -24,21 +48,21 @@ class RetailorResource extends Resource
 
     protected static ?string $model = Retailor::class;
     protected static ?string $modelLabel = 'Retailor';
-    protected static ?string $navigationGroup = 'Customers Management';
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static string | \UnitEnum | null $navigationGroup = 'Customers Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-user-group';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Group::make()->schema([
 
-                    Forms\Components\Section::make('Retailor Information')
+                    Section::make('Retailor Information')
                         ->columns(2)
                         ->schema([
 
-                            Forms\Components\TextInput::make('name')
+                            TextInput::make('name')
                                 ->required()
                                 ->maxLength(255)
                                 ->afterStateUpdated(function (Set $set, $state, $operation) {
@@ -50,7 +74,7 @@ class RetailorResource extends Resource
                                 ->live(onBlur: true)
                                 ->label('Name'),
 
-                            Forms\Components\TextInput::make('slug')
+                            TextInput::make('slug')
                                 ->required()
                                 ->disabledOn(['edit'])
                                 ->readOnlyOn('create')
@@ -59,12 +83,12 @@ class RetailorResource extends Resource
                                 ->maxLength(255)
                                 ->label('Slug'),
 
-                            Forms\Components\Textarea::make('address')
+                            Textarea::make('address')
                                 ->maxLength(255)
                                 ->columnSpanFull()
                                 ->label('Address'),
 
-                            Forms\Components\Select::make('city')
+                            Select::make('city')
                                 ->prefixicon('heroicon-o-map-pin')
                                 ->preload()
                                 ->searchable()
@@ -78,18 +102,18 @@ class RetailorResource extends Resource
                                 ])
                                 ->label('City'),
 
-                            Forms\Components\TextInput::make('pincode')
+                            TextInput::make('pincode')
                                 ->maxLength(255)
                                 ->label('Pincode'),
 
-                            Forms\Components\TextInput::make('phone')
+                            TextInput::make('phone')
                                 ->tel()
                                 ->required()
                                 ->prefixIcon('heroicon-o-phone')
                                 ->maxLength(255)
                                 ->label('Phone'),
 
-                            Forms\Components\TextInput::make('email')
+                            TextInput::make('email')
                                 ->email()
                                 ->prefixicon('heroicon-o-envelope')
                                 ->maxLength(255)
@@ -97,20 +121,20 @@ class RetailorResource extends Resource
 
                         ])->columnSpan(2),
 
-                    Forms\Components\Section::make('Additional Information')
+                    Section::make('Additional Information')
                         ->schema([
 
-                            Forms\Components\FileUpload::make('logo')
+                            FileUpload::make('logo')
                                 // ->image()
                                 ->imageEditor()
                                 ->directory('retailor')
                                 ->columnSpanFull()
                                 ->label('Logo'),
 
-                            Forms\Components\Textarea::make('description')
+                            Textarea::make('description')
                                 ->label('Description'),
 
-                            Forms\Components\Textarea::make('additional_info')
+                            Textarea::make('additional_info')
                                 ->maxLength(1000)
                                 ->label('Additional Information'),
 
@@ -120,15 +144,15 @@ class RetailorResource extends Resource
 
                 Group::make()->schema([
 
-                    Forms\Components\Section::make('Status')
+                    Section::make('Status')
                         ->description("Retailor Management")
                         ->schema([
 
-                            Forms\Components\Select::make('authorized_person')
+                            Select::make('authorized_person')
                                 ->options(User::role('retailor')->pluck('name', 'id'))
                                 ->label('Authorized Person'),
 
-                            Forms\Components\Radio::make('status')
+                            Radio::make('status')
                                 ->inline()
                                 ->inlineLabel(false)
                                 ->default('verified')
@@ -139,7 +163,7 @@ class RetailorResource extends Resource
                                 ])
                                 ->label('Status'),
 
-                            Forms\Components\Toggle::make('is_active')
+                            Toggle::make('is_active')
                                 ->required()
                                 ->label('Is Active'),
 
@@ -155,27 +179,27 @@ class RetailorResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('logo')
+                ImageColumn::make('logo')
                     ->label('')
                     ->size(50)
                     ->circular()
                     ->defaultImageUrl('https://ui-avatars.com/api/?name='),
 
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable(['name', 'city'])
                     ->description(fn($record)=> "City: ". ucfirst($record->city) ?? "Na")
                     ->sortable()
                     ->label('Retailor Name')
                     ->limit(25),
 
-                Tables\Columns\TextColumn::make('phone')
+                TextColumn::make('phone')
                     ->searchable(["phone", "email"])
                     ->label("Contact")
                     ->description(fn($record)=> $record->email ?? "Na")
                     ->icon('heroicon-o-phone'),
 
 
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->formatStateUsing(fn($state)=>ucfirst($state))
                     ->colors([
@@ -185,17 +209,17 @@ class RetailorResource extends Resource
                     ])
                     ->label('Status'),
 
-                Tables\Columns\ToggleColumn::make('is_active')
+                ToggleColumn::make('is_active')
                     ->label('Active'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Created'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('city')
+                SelectFilter::make('city')
                     ->options([
                         'navsari' => 'Navsari',
                         'surat' => 'Surat',
@@ -207,7 +231,7 @@ class RetailorResource extends Resource
                     ->preload()
                     ->label('Filter by City'),
 
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options([
                         'pending' => 'Pending',
                         'verified' => 'Verified',
@@ -217,14 +241,14 @@ class RetailorResource extends Resource
                     ->preload()
                     ->label('Filter by Status'),
 
-                Tables\Filters\TernaryFilter::make('is_active')
+                TernaryFilter::make('is_active')
                     ->label('Active Status'),
 
-                Tables\Filters\Filter::make('created_date_range')
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from')
+                Filter::make('created_date_range')
+                    ->schema([
+                        DatePicker::make('created_from')
                             ->label('Created From'),
-                        Forms\Components\DatePicker::make('created_until')
+                        DatePicker::make('created_until')
                             ->label('Created Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -240,9 +264,9 @@ class RetailorResource extends Resource
                     })
                     ->label('Created Date Range'),
 
-                Tables\Filters\Filter::make('pincode_search')
-                    ->form([
-                        Forms\Components\TextInput::make('pincode')
+                Filter::make('pincode_search')
+                    ->schema([
+                        TextInput::make('pincode')
                             ->label('Pincode')
                             ->placeholder('Enter pincode to search'),
                     ])
@@ -255,16 +279,16 @@ class RetailorResource extends Resource
                     })
                     ->label('Search by Pincode'),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()->label("")->tooltip("View")->size("lg"),
-                Tables\Actions\EditAction::make()->label("")->tooltip("Edit")->size("lg"),
-                Tables\Actions\DeleteAction::make()->label("")->tooltip("Delete")->size("lg"),
+            ->recordActions([
+                ViewAction::make()->label("")->tooltip("View")->size("lg"),
+                EditAction::make()->label("")->tooltip("Edit")->size("lg"),
+                DeleteAction::make()->label("")->tooltip("Delete")->size("lg"),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
 
-                    Tables\Actions\BulkAction::make('activate')
+                    BulkAction::make('activate')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->label('Activate Selected')
@@ -275,7 +299,7 @@ class RetailorResource extends Resource
                         })
                         ->requiresConfirmation(),
 
-                    Tables\Actions\BulkAction::make('deactivate')
+                    BulkAction::make('deactivate')
                         ->icon('heroicon-o-x-circle')
                         ->color('danger')
                         ->label('Deactivate Selected')
@@ -286,7 +310,7 @@ class RetailorResource extends Resource
                         })
                         ->requiresConfirmation(),
 
-                    Tables\Actions\BulkAction::make('mark_verified')
+                    BulkAction::make('mark_verified')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->label('Mark as Verified')
@@ -297,7 +321,7 @@ class RetailorResource extends Resource
                         })
                         ->requiresConfirmation(),
 
-                    Tables\Actions\BulkAction::make('mark_pending')
+                    BulkAction::make('mark_pending')
                         ->icon('heroicon-o-clock')
                         ->color('warning')
                         ->label('Mark as Pending')
@@ -308,7 +332,7 @@ class RetailorResource extends Resource
                         })
                         ->requiresConfirmation(),
 
-                    Tables\Actions\BulkAction::make('mark_rejected')
+                    BulkAction::make('mark_rejected')
                         ->icon('heroicon-o-x-mark')
                         ->color('danger')
                         ->label('Mark as Rejected')
@@ -336,10 +360,10 @@ class RetailorResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListRetailors::route('/'),
-            'create' => Pages\CreateRetailor::route('/create'),
-            'edit' => Pages\EditRetailor::route('/{record}/edit'),
-            'view' => Pages\ViewRetailor::route('/{record}'),
+            'index' => ListRetailors::route('/'),
+            'create' => CreateRetailor::route('/create'),
+            'edit' => EditRetailor::route('/{record}/edit'),
+            'view' => ViewRetailor::route('/{record}'),
         ];
     }
 }

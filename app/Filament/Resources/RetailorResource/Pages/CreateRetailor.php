@@ -2,19 +2,22 @@
 
 namespace App\Filament\Resources\RetailorResource\Pages;
 
+use LaraZeus\SpatieTranslatable\Resources\Pages\CreateRecord\Concerns\Translatable;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\RetailorResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateRetailor extends CreateRecord
 {
-    use CreateRecord\Concerns\Translatable;
+    use Translatable;
 
     protected static string $resource = RetailorResource::class;
     public function getHeaderActions(): array
     {
         return [
-            Actions\LocaleSwitcher::make(),
+            LocaleSwitcher::make(),
         ];
     }
 
@@ -23,7 +26,7 @@ class CreateRetailor extends CreateRecord
         // dd($data);
 
         //add current auth user id
-        $data['user_id'] = \Illuminate\Support\Facades\Auth::id();
+        $data['user_id'] = Auth::id();
 
         //json store retailors details
         $data['customer_information'] = [

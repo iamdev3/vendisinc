@@ -3,11 +3,10 @@
 namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
-use Filament\Pages\Auth\Login as BaseLoginPage;
 use Filament\Forms\Form;
 use AbanoubNassem\FilamentGRecaptchaField\Forms\Components\GRecaptcha;
 
-class Login extends BaseLoginPage
+class Login extends \Filament\Auth\Pages\Login
 {
     // protected static ?string $navigationIcon = 'heroicon-o-document-text';
     // protected static string $view = 'filament.pages.login';
@@ -17,7 +16,7 @@ class Login extends BaseLoginPage
         return [
             'form' => $this->form(
                  $this->makeForm()
-                    ->schema([
+                    ->components([
 
                         $this->getEmailFormComponent(),
                         $this->getPasswordFormComponent(),
@@ -26,7 +25,7 @@ class Login extends BaseLoginPage
                         ->visible(env('RECAPTCHA_ENABLED', true))
 
 
-                ])->statePath('data'),
+                    ])->statePath('data'),
             ),
         ];
     }
