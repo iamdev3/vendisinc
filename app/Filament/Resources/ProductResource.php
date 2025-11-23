@@ -68,7 +68,7 @@ class ProductResource extends Resource
                             //     if($record){
                             //         $set('slug', Str::slug($state));
                             //     }
-                            // })
+                            // })                            
                             ->label(__('name')),
 
                         Select::make('brand_id')
@@ -94,6 +94,7 @@ class ProductResource extends Resource
                             ->placeholder(__('eg_brand_name'))
                             ->helperText(__('add_unique_slug'))
                             ->maxLength(255)
+                            ->dehydrated(true)
                             ->label(__('slug')),
 
                         Textarea::make('description')

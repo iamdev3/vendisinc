@@ -33,9 +33,12 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
 class BrandResource extends Resource
 {
+    use Translatable;
+
     protected static ?string $model = Brand::class;
     protected static string | \UnitEnum | null $navigationGroup = 'Brand Management';
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-briefcase';
@@ -81,7 +84,8 @@ class BrandResource extends Resource
                             ->placeholder("eg:brand-name")
                             ->helperText("Add a unique slug for the brand (eg: brand-name)")
                             ->maxLength(255)
-                            ->label('Slug'),
+                            ->label('Slug')
+                            ->dehydrated(true),
 
                         Textarea::make('address')
                             ->maxLength(255)
@@ -146,6 +150,7 @@ class BrandResource extends Resource
                 ImageColumn::make('logo')
                     ->grow(false)
                     ->label("")
+                    ->defaultImageUrl('/images/brand_placeholder.png')
                     ->circular(),
 
                 TextColumn::make('name')

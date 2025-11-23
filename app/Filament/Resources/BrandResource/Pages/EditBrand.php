@@ -2,29 +2,22 @@
 
 namespace App\Filament\Resources\BrandResource\Pages;
 
+use LaraZeus\SpatieTranslatable\Resources\Pages\EditRecord\Concerns\Translatable;
 use Filament\Actions\DeleteAction;
+use LaraZeus\SpatieTranslatable\Actions\LocaleSwitcher;
 use App\Filament\Resources\BrandResource;
 use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
 
-class EditBrand extends EditRecord
+class EditBrand extends \Filament\Resources\Pages\EditRecord
 {
+    use Translatable;
     protected static string $resource = BrandResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
+            LocaleSwitcher::make(),
             DeleteAction::make(),
         ];
-    }
-
-    public function mutateFormDataBeforeFill(array $data): array
-    {
-        // dump($data);
-        // if (isset($data['logo'])) {
-        //     $data['logo'] = basename($data['logo']);
-        // }
-        // dump($data['logo']);
-        return $data;
     }
 }

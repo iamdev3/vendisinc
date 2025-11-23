@@ -39,12 +39,14 @@ use App\Enums\OrderStatus;
 use App\Models\Brand;
 use App\Models\Retailor;
 use Filament\Support\Enums\Alignment;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Enums\FiltersLayout;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
     protected static string | \UnitEnum | null $navigationGroup = "Orders";
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-square-3-stack-3d';
 
     public static function form(Schema $schema): Schema
     {
@@ -632,6 +634,7 @@ class OrderResource extends Resource
                 TextColumn::make('total_amount')
                     ->label('Total')
                     ->numeric()
+                    ->summarize(Sum::make()->label('Total Amount')->money(config('settings.general_settings.default_currency', 'INR')))
                     ->money(config("services.system_params.currency"))
                     ->sortable(),
 
@@ -640,6 +643,7 @@ class OrderResource extends Resource
                     ->numeric()
                     ->money(config("services.system_params.currency"))
                     ->color('success')
+                    ->summarize(Sum::make()->label('Total Profit')->money(config('settings.general_settings.default_currency', 'INR')))
                     ->sortable()
                     ->toggleable(),
 
@@ -697,8 +701,21 @@ class OrderResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
 
+                SelectFilter::make('retailor_id')
+                    ->label("Filter by Retailer")
+                    ->searchable()
+                    ->preload()
+                    ->options(Retailor::pluck('name', 'id')),
+
+                SelectFilter::make('brand_id')
+                    ->label("Filter by Brand")
+                    ->searchable()
+                    ->preload()
+                    ->options(Brand::pluck('name', 'id')),
+
                 SelectFilter::make('status')
                     ->preload()
+                    ->multiple()
                     ->searchable()
                     ->options(OrderStatus::getOptions()),
 
@@ -713,10 +730,14 @@ class OrderResource extends Resource
                 Filter::make('order_date')
                     ->schema([
                         DatePicker::make('from')
+                            ->native(false)
+                            ->prefixIcon("heroicon-o-calendar")
                             ->label('From Date'),
                         DatePicker::make('until')
+                            ->native(false)
+                            ->prefixIcon("heroicon-o-calendar")
                             ->label('Until Date'),
-                    ])
+                    ])->columns(2)
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
@@ -728,25 +749,19 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('order_date', '<=', $date),
                             );
                     }),
-
-                SelectFilter::make('retailor_id')
-                    ->label("Filter by Retaioler")
-                    ->searchable()
-                    ->preload()
-                    ->options(Retailor::pluck('name', 'id')),
-
-                SelectFilter::make('brand_id')
-                    ->label("Filter by Brand")
-                    ->searchable()
-                    ->preload()
-                    ->options(Brand::pluck('name', 'id')),
-            ])
+              
+                ],  layout: FiltersLayout::AboveContentCollapsible)->filtersFormColumns(3)
+            
             ->recordActions([
+
                 ViewAction::make()
                     ->hiddenLabel()
+                    ->size("lg")
                     ->tooltip('View'),
+
                 EditAction::make()
                     ->hiddenLabel()
+                    ->size("lg")
                     ->tooltip('Edit'),
             ])
             ->toolbarActions([

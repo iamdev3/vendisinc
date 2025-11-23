@@ -51,7 +51,9 @@
     "enter_quantity": "Enter approximate quantity: 100 gm",
     "eg_1000": "E.g: 1000",
     "eg_1500": "E.g: 1500",
-    "upload_image": "Upload Product Image, format : jpeg, png, webp. Max Size : 2 MB"
+    "upload_image": "Upload Product Image, format : jpeg, png, webp. Max Size : 2 MB",
+
+    "new_category" : "New Category"
 }
 
 

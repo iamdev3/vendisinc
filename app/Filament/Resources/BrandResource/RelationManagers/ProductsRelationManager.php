@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BrandResource\RelationManagers;
 
+use App\Filament\Resources\ProductResource;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -23,9 +24,12 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use App\Models\Category;
+use Filament\Actions\Action;
+use LaraZeus\SpatieTranslatable\Resources\RelationManagers\Concerns\Translatable;
 
 class ProductsRelationManager extends RelationManager
-{
+{   
+    use Translatable;
     protected static string $relationship = 'products';
 
     public function form(Schema $schema): Schema
@@ -89,7 +93,7 @@ class ProductsRelationManager extends RelationManager
                             ->image()
                             ->label(__('image')),
 
-                    ])->columnSpan(2),
+                    ])->columnSpan(3),
 
                 Section::make(__('product_management'))
                     ->description(__('product_management_info'))
@@ -111,7 +115,7 @@ class ProductsRelationManager extends RelationManager
                             ->columnSpanFull()
                             ->label(__('additional_info')),
 
-                    ])->columnSpan(1),
+                    ])->columnSpan(3)->columns(2    ),
             ])->columns(3);
     }
 
@@ -161,7 +165,12 @@ class ProductsRelationManager extends RelationManager
                 AssociateAction::make(),
             ])
             ->recordActions([
-                EditAction::make()->label("")->tooltip(__("Edit"))->size("lg"),
+                Action::make('edit')
+                    ->label('')
+                    ->tooltip(__('Edit'))
+                    ->size('lg')
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn ($record) => ProductResource::getUrl('edit', ['record' => $record])),
                 DissociateAction::make()->label("")->tooltip(__("Dissociate"))->size("lg"),
                 DeleteAction::make()->label("")->tooltip(__("Delete"))->size("lg"),
             ])

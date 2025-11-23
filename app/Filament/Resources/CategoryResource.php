@@ -18,6 +18,9 @@ use App\Filament\Resources\CategoryResource\Pages\EditCategory;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
@@ -28,9 +31,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use TangoDevIt\FilamentEmojiPicker\EmojiPickerAction;
+use LaraZeus\SpatieTranslatable\Resources\Concerns\Translatable;
 
 class CategoryResource extends Resource
-{
+{   
+    use Translatable;
+    
     protected static ?string $model = Category::class;
     protected static string | \UnitEnum | null $navigationGroup = 'Brand Management';
     protected static? Int $navigationSort = 3;
@@ -64,36 +70,33 @@ class CategoryResource extends Resource
                             ->preload()
                             ->label('Parent ID'),
 
-                        TextInput::make('icon')
-                            ->maxLength(255)
-                            ->suffixAction(EmojiPickerAction::make('emoji-title'))
-                            ->regex('/^(?:[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}]|[\x{2764}]|[\x{FE0F}]|[\x{200D}])+$/u')
-                            ->validationMessages([
-                                'regex' => 'Please use the emoji picker to select a valid emoji.',
-                            ])
-                            ->helperText('Use the 😀 button to pick an emoji')
-                            ->label('Icon'),
+                        // TextInput::make('icon')
+                        //     ->maxLength(255)
+                        //     ->suffixAction(EmojiPickerAction::make('emoji-title'))
+                        //     ->regex('/^(?:[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}]|[\x{2764}]|[\x{FE0F}]|[\x{200D}])+$/u')
+                        //     ->validationMessages([
+                        //         'regex' => 'Please use the emoji picker to select a valid emoji.',
+                        //     ])
+                        //     ->helperText('Use the 😀 button to pick an emoji')
+                        //     ->label('Icon'),
 
                         TextInput::make('slug')
                             ->required()
                             ->maxLength(255)
+                            ->disabledOn("edit")
+                            ->dehydrated(true)
                             ->label('Slug'),
 
                         Textarea::make('description')
                             ->maxLength(255)
                             ->placeholder('Enter Description about 255 characters')
-                            ->label('Description'),
-
-                        Textarea::make('additional_info')
-                            ->maxLength(150)
-                            ->placeholder('Enter Additional Information about 150 characters')
-                            ->label('Additional Information'),
+                            ->label('Description'),                     
 
                         Toggle::make('is_active')
                             ->required()
                             ->label('Is Active'),
 
-                    ])->columns(2),
+                    ])->columns(2)->columnSpanFull(),
             ]);
     }
 
@@ -101,33 +104,44 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
+                
                 TextColumn::make('name')
                     ->searchable()
                     ->label('Name'),
+
                 TextColumn::make('slug')
                     ->searchable()
                     ->label('Slug'),
+
                 TextColumn::make('icon')
                     ->searchable()
                     ->label('Icon'),
-                TextColumn::make('description')
+              
+                TextColumn::make('parent.name')
                     ->searchable()
-                    ->label('Description'),
-                TextColumn::make('parent_id')
-                    ->searchable()
-                    ->label('Parent ID'),
+                    ->label('Parent Category'),
+
                 ToggleColumn::make('is_active')
                     ->label('Is Active'),
+
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Created At'),
+
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Updated At'),
+            ])
+            ->recordActions([
+
+                ViewAction::make()->label("")->tooltip(__('view'))->size("lg"),
+                EditAction::make()->label("")->tooltip(__('edit'))->size("lg"),
+                DeleteAction::make()->label("")->tooltip(__('delete'))->size("lg"),
+
             ])
             ->filters([
                 TernaryFilter::make('is_active')
