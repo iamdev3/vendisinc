@@ -13,7 +13,8 @@
         "filament/filament": "~4.0",
         "lara-zeus/spatie-translatable": "^1.0",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "zpmlabs/filament-unlayer": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

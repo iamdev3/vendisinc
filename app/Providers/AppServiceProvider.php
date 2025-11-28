@@ -20,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Global configuration for all panels
+                // Global configuration for all panels
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch
                 ->locales(['en', 'gu'])
@@ -32,4 +32,5 @@ class AppServiceProvider extends ServiceProvider
                 ->visible(insidePanels: true, outsidePanels: false);
         });
     }
+    
 }

@@ -198,6 +198,21 @@ class FormFieldBuilder
                 )
                 ->placeholder($fieldDefinition['placeholder'] ?? 'Select an option'),
 
+            'multi-select' => Select::make($fieldDefinition['key'])
+                ->label($fieldDefinition['label'] ?? ucfirst($fieldDefinition['key']))
+                ->options($fieldDefinition['options'] ?? [])
+                ->searchable($fieldDefinition['searchable'] ?? false)
+                ->required($fieldDefinition['required'] ?? false)
+                ->default($fieldDefinition['default'] ?? null)
+                ->helperText($fieldDefinition['helper_text'] ?? null)
+                ->multiple($fieldDefinition['multiple'] ?? false)
+                ->when(
+                    $fieldDefinition['columnSpanFull'] ?? false,
+                    fn($field) => $field->columnSpanFull()
+                )
+                ->dehydrateStateUsing(fn($state) =>  json_encode($state))
+                ->placeholder($fieldDefinition['placeholder'] ?? 'Select an option'),
+
             'toggle' => Toggle::make($fieldDefinition['key'])
                 ->label($fieldDefinition['label'] ?? ucfirst($fieldDefinition['key']))
                 ->required($fieldDefinition['required'] ?? false)
@@ -228,6 +243,7 @@ class FormFieldBuilder
                         ->image()
                         ->maxSize($fieldDefinition['maxSize'] ?? 1080*2)
                         ->default($fieldDefinition['default'] ?? null)
+                        ->imagePreviewHeight('250')
                         ->when(
                             $fieldDefinition['columnSpanFull'] ?? false,
                             fn($field) => $field->columnSpanFull()

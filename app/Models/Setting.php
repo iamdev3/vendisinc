@@ -14,7 +14,6 @@ class Setting extends Model
 
 
     public static function generateConfig(){
-
         $allSettings = Self::all();
         $groupSettings = [];
 
@@ -32,6 +31,9 @@ class Setting extends Model
         // Write to file
         File::put($configPath, $configContent);
         
+        // Update environment variables for mail settings
+        self::updateEnvironmentVariables($groupSettings['mail'] ?? []);
+        
         // Clear config cache so Laravel picks up the new file
         Artisan::call('config:clear');
 
@@ -41,5 +43,83 @@ class Setting extends Model
             ->info()
             ->send();
 
+    }
+    
+    /**
+     * Update environment variables with mail settings
+     *
+     * @param array $mailSettings
+     * @return void
+     */
+    protected static function updateEnvironmentVariables(array $mailSettings): void
+    {
+        // Define the essential mail environment variables to update
+        $mailEnvVars = [
+            'MAIL_MAILER',
+            'MAIL_HOST',
+            'MAIL_PORT',
+            'MAIL_USERNAME',
+            'MAIL_PASSWORD',
+            'MAIL_FROM_ADDRESS'
+        ];
+        
+        // Get the path to the .env file
+        $envPath = base_path('.env');
+        
+        // Check if .env file exists
+        if (!File::exists($envPath)) {
+            return;
+        }
+        
+        // Read the current .env content
+        $envContent = File::get($envPath);
+        
+        // Update each mail setting
+        foreach ($mailEnvVars as $envVar) {
+            if (isset($mailSettings[$envVar])) {
+                $value = $mailSettings[$envVar];
+                
+                // Escape special characters in the value
+                $escapedValue = self::escapeEnvValue($value);
+                
+                // Check if the variable already exists in .env
+                if (preg_match("/^{$envVar}=.*/m", $envContent)) {
+                    // Update existing variable
+                    $envContent = preg_replace(
+                        "/^{$envVar}=.*/m",
+                        "{$envVar}={$escapedValue}",
+                        $envContent
+                    );
+                } else {
+                    // Add new variable
+                    $envContent .= "\n{$envVar}={$escapedValue}";
+                }
+            }
+        }
+        
+        // Write the updated content back to .env file
+        File::put($envPath, $envContent);
+    }
+    
+    /**
+     * Escape special characters in environment variable values
+     *
+     * @param string|null $value
+     * @return string
+     */
+    protected static function escapeEnvValue(?string $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        
+        // If value contains spaces or special characters, wrap in quotes
+        if (preg_match('/\s|[#\$\\"\'`]/', $value)) {
+            // Escape double quotes
+            $value = str_replace('"', '\"', $value);
+            return "\"{$value}\"";
+        }
+        
+        return $value;
     }
 }

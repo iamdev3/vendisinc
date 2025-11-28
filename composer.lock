@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "54030f409b51455e0bc60ddc7d053648",
+    "content-hash": "ab2e2d77a874d262f4756cda87623041",
     "packages": [
         {
             "name": "abanoubnassem/filament-grecaptcha-field",
@@ -8722,6 +8722,85 @@
                 }
             ],
             "time": "2024-11-21T01:49:47+00:00"
+        },
+        {
+            "name": "zpmlabs/filament-unlayer",
+            "version": "2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ZPMLabs/filament-unlayer.git",
+                "reference": "4233a4c6cbe8bed500761dcefdfdead8cf2e6ff3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ZPMLabs/filament-unlayer/zipball/4233a4c6cbe8bed500761dcefdfdead8cf2e6ff3",
+                "reference": "4233a4c6cbe8bed500761dcefdfdead8cf2e6ff3",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.0",
+                "filament/forms": "^4.0",
+                "php": "^8.1",
+                "spatie/laravel-package-tools": "^1.15.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.9",
+                "nunomaduro/larastan": "^2.0.1",
+                "orchestra/testbench": "^8.0",
+                "pestphp/pest": "^2.1",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^1.0",
+                "phpstan/phpstan-phpunit": "^1.0",
+                "spatie/laravel-ray": "^1.26"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "FilamentUnlayer": "ZPMLabs\\FilamentUnlayer\\Facades\\Unlayer"
+                    },
+                    "providers": [
+                        "ZPMLabs\\FilamentUnlayer\\UnlayerServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "ZPMLabs\\FilamentUnlayer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sasa Orasanin",
+                    "email": "development@zpmlabs.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Filament wrapper for unlayer editor.",
+            "homepage": "https://github.com/sasaorasanin/filament-unlayer",
+            "keywords": [
+                "ZPM Labs",
+                "filament-unlayer",
+                "laravel"
+            ],
+            "support": {
+                "issues": "https://github.com/sasaorasanin/filament-unlayer/issues",
+                "source": "https://github.com/sasaorasanin/filament-unlayer"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ZPMLabs",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-07-06T13:50:32+00:00"
         }
     ],
     "packages-dev": [

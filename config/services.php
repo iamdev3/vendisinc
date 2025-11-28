@@ -37,6 +37,11 @@ return [
 
     'system_params' => [
         "currency" => "INR",
-    ]
+    ],
+
+    'unlayer' => [
+        'project_id' => env('UNLAYER_PROJECT_ID', null),
+        'api_key'    => env('UNLAYER_API_KEY', null),
+    ],
 
 ];
