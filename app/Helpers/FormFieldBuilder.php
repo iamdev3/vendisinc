@@ -248,7 +248,7 @@ class FormFieldBuilder
                             $fieldDefinition['columnSpanFull'] ?? false,
                             fn($field) => $field->columnSpanFull()
                         )
-                        ->helperText($fieldDefinition['helper_text'] ?? null),
+                        ->helperText($fieldDefinition['helperText'] ?? null),
 
             default => TextInput::make($fieldDefinition['key'])
                 ->label($fieldDefinition['label'] ?? ucfirst($fieldDefinition['key']))

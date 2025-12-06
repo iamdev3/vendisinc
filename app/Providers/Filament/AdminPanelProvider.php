@@ -27,6 +27,9 @@ use Filament\Forms\Components\Select;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use App\Filament\Pages\Login;
 use Illuminate\Support\Facades\Storage;
+use Caresome\FilamentAuthDesigner\AuthDesignerPlugin;
+use Caresome\FilamentAuthDesigner\Enums\AuthLayout;
+use Caresome\FilamentAuthDesigner\Enums\MediaDirection;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -63,6 +66,13 @@ class AdminPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make(),
                 SpatieTranslatablePlugin::make()
                     ->defaultLocales(['en', 'gu']),
+                AuthDesignerPlugin::make()
+                    ->login(
+                        layout: AuthLayout::Split,
+                        media: Storage::url(config("settings.general_settings.admin_login_image")) ?? null,
+                        direction: MediaDirection::Left,
+                        blur: 10
+                    )->themeToggle()
             ])
             ->authMiddleware([
                 Authenticate::class,
@@ -74,6 +84,7 @@ class AdminPanelProvider extends PanelProvider
                 "Settings",
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->font('montserrat')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

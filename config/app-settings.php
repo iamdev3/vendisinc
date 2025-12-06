@@ -41,6 +41,14 @@ return [
                     "required" => false,
                 ],
                 [
+                    "key" => "admin_login_image",
+                    "label" => "Admin Login Page Image",
+                    "type" => "image",
+                    "placeholder" => "Upload Logo image, File: jpg/png | maxsize:2mb",
+                    "helperText" => "This image will be use on login page",
+                    "required" => false,
+                ],
+                [
                     "key" => "app_description",
                     "label" => "App Description",
                     "type" => "textarea",
@@ -72,7 +80,7 @@ return [
                     "multiple"   => true,
                     "searchable" => true,
                 ]
-             
+
             ],
         ],
 

@@ -10,6 +10,7 @@
         "abanoubnassem/filament-grecaptcha-field": "^0.0.11",
         "bezhansalleh/filament-language-switch": "^4.0",
         "bezhansalleh/filament-shield": "^4.0",
+        "caresome/filament-auth-designer": "^1.0",
         "filament/filament": "~4.0",
         "lara-zeus/spatie-translatable": "^1.0",
         "laravel/framework": "^12.0",

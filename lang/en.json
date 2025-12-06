@@ -53,8 +53,29 @@
     "eg_1500": "E.g: 1500",
     "upload_image": "Upload Product Image, format : jpeg, png, webp. Max Size : 2 MB",
 
-    "new_category" : "New Category"
+    "new_category": "New Category",
+    "Business Overview": "Business Overview",
+    "Add-Order": "Add Order",
+
+    "Total Active Brands": "Total Active Brands",
+    "Active brand partnerships": "Active brand partnerships",
+    "Total number of brands registered in the system. Only active brands are counted in business metrics.": "Total number of brands registered in the system. Only active brands are counted in business metrics.",
+    "Total Products": "Total Products",
+    "Products in catalog": "Products in catalog",
+    "Total number of products across all brands. This includes both active and inactive products.": "Total number of products across all brands. This includes both active and inactive products.",
+    "Total Categories": "Total Categories",
+    "Product categories": "Product categories",
+    "Number of product categories used to organize products. Categories help in better product management.": "Number of product categories used to organize products. Categories help in better product management.",
+    "Total Orders": "Total Orders",
+    "All order records": "All order records",
+    "Total number of orders placed, including pending, confirmed, shipped, delivered, cancelled, and on-hold orders.": "Total number of orders placed, including pending, confirmed, shipped, delivered, cancelled, and on-hold orders.",
+    "Orders in Progress": "Orders in Progress",
+    "Confirmed & shipped orders": "Confirmed & shipped orders",
+    "Number of orders that are confirmed or shipped but not yet delivered. These orders are currently in transit or being processed for delivery.": "Number of orders that are confirmed or shipped but not yet delivered. These orders are currently in transit or being processed for delivery.",
+    "Pending Order Value": "Pending Order Value",
+    "Value of pending orders": "Value of pending orders",
+    "Total monetary value of orders with 'pending' as payment status. These orders are awaiting to be paid.": "Total monetary value of orders with 'pending' as payment status. These orders are awaiting to be paid.",
+    "Total Profit": "Total Profit",
+    "Profit from delivered orders": "Profit from delivered orders",
+    "Total profit generated from delivered orders & payment status mark as paid. Profit is calculated as sell price minus base cost for each product.": "Total profit generated from delivered orders & payment status mark as paid. Profit is calculated as sell price minus base cost for each product."
 }
-
-
-

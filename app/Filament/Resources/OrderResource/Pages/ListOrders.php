@@ -17,12 +17,12 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()->label(__("Add-Order")),
         ];
     }
 
     public function getTabs(): array
-    {   
+    {
 
         $tabs = [
             'all' => Tab::make('All')
@@ -32,7 +32,7 @@ class ListOrders extends ListRecords
         // Loop through enum cases to create tabs
         foreach (OrderStatus::cases() as $status) {
 
-            $tabs[$status->value] = 
+            $tabs[$status->value] =
 
                 Tab::make($status->label())
                     ->modifyQueryUsing(fn (Builder $query) => $query->where('status', $status->value))
@@ -45,5 +45,5 @@ class ListOrders extends ListRecords
 
     }
 
-    
+
 }

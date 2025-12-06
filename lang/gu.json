@@ -53,8 +53,30 @@
     "eg_1500": "દા.ત: 1500",
     "upload_image": "પ્રોડક્ટ છબી અપલોડ કરો, ફોર્મેટ: jpeg, png, webp. મહત્તમ કદ: 2 MB",
 
-    "new_category" : "નવી શ્રેણી"
-    
-    
-}
+    "new_category": "નવી શ્રેણી",
+    "Business Overview": "બિઝનેસ ઓવરવ્યૂ",
+    "Add-Order": "નવો ઓર્ડર",
 
+    "Key metrics and statistics for your business": "બિઝનેસ માટે મુખ્ય મેટ્રિક્સ અને આંકડા",
+    "Active brand partnerships": "સક્રિય બ્રાન્ડ ભાગીદારીઓ",
+    "Total number of brands registered in the system. Only active brands are counted in business metrics.": "સિસ્ટમમાં રજીસ્ટર થયેલ બ્રાન્ડની કુલ સંખ્યા. કેવળ સક્રિય બ્રાન્ડને જ બિઝનેસ મેટ્રિક્સમાં ગણવામાં આવે છે.",
+    "Products in catalog": "કેટલોગમાં પ્રોડક્ટ્સ",
+    "Total number of products across all brands. This includes both active and inactive products.": "બધા બ્રાન્ડ પર પ્રોડક્ટ્સની કુલ સંખ્યા. આમાં સક્રિય અને નિષ્ક્રિય બંને પ્રોડક્ટ્સ સમાવે છે.",
+    "Product categories": "પ્રોડક્ટ કેટેગરીઝ",
+    "Number of product categories used to organize products. Categories help in better product management.": "પ્રોડક્ટ્સનું સંગઠન કરવા માટે ઉપયોગમાં લેવાતી પ્રોડક્ટ કેટેગરીઝની સંખ્યા. કેટેગરીઝ સારા પ્રોડક્ટ મેનેજમેન્ટમાં મદદ કરે છે.",
+    "All order records": "બધા ઓર્ડર રેકોર્ડ્સ",
+    "Total number of orders placed, including pending, confirmed, shipped, delivered, cancelled, and on-hold orders.": "સ્થાપિત કરેલ ઓર્ડરની કુલ સંખ્યા, જેમાં બાકી, ખાતરી કરેલ, મોકલેલ, ડિલિવર કરેલ, રદ કરેલ અને ધરી રાખેલ ઓર્ડર સમાવે છે.",
+    "Confirmed & shipped orders": "ખાતરી કરેલ અને મોકલેલ ઓર્ડર્સ",
+    "Number of orders that are confirmed or shipped but not yet delivered. These orders are currently in transit or being processed for delivery.": "ઓર્ડરની સંખ્યા જેની ખાતરી કરેલ છે અથવા મોકલી દેવામાં આવી છે પણ હજુ ડિલિવર કરેલ નથી. આ ઓર્ડર હાલમાં ટ્રાન્સિટમાં છે અથવા ડિલિવરી માટે પ્રોસેસ થઈ રહ્યા છે.",
+    "Value of pending orders": "બાકી રહેલા ઓર્ડરની કિંમત",
+    "Total monetary value of orders with 'pending' as payment status. These orders are awaiting to be paid.": "'બાકી' તરીકે ચૂકવણી સ્થિતિ ધરાવતા ઓર્ડર્સની કુલ મૌદ્રિક કિંમત. આ ઓર્ડર્સ ચૂકવવાની રાહ જોઈ રહ્યા છે.",
+    "Profit from delivered orders": "ડિલિવર કરેલા ઓર્ડર્સમાંથી નફો",
+    "Total profit generated from delivered orders & payment status mark as paid. Profit is calculated as sell price minus base cost for each product.": "ડિલિવર કરેલા ઓર્ડર્સમાંથી ઉત્પન્ન થયેલો કુલ નફો અને ચૂકવણી સ્થિતિને ચૂકવેલ તરીકે ચિહ્નિત કરો. નફોની ગણતરી દરેક પ્રોડક્ટ માટે વેચાણ કિંમત બાદ મૂળ કિંમત તરીકે કરવામાં આવે છે.",
+    "Total Active Brands": "કુલ સક્રિય બ્રાન્ડ",
+    "Total Products": "કુલ પ્રોડક્ટ્સ",
+    "Total Categories": "કુલ કેટેગરીઝ",
+    "Total Orders": "કુલ ઓર્ડર્સ",
+    "Orders in Progress": "Progressing ઓર્ડર્સ",
+    "Pending Order Value": "Pending ઓર્ડરની કિંમત",
+    "Total Profit": "કુલ નફો"
+}
