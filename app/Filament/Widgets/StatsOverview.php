@@ -66,18 +66,7 @@ class StatsOverview extends StatsOverviewWidget
                 'url'               => ProductResource::getUrl()
 
             ],
-            [
-                'label'             => __("Total Categories"),
-                'value'             => $totalCategory,
-                'value_type'        => 'number',
-                'shortDescription'  => __("Product categories"),
-                'description'       => __("Number of product categories used to organize products. Categories help in better product management."),
-                'icon'              => "heroicon-m-tag",
-                'color'             => "warning",
-                'url'               => CategoryResource::getUrl()
-
-            ],
-            [
+             [
                 'label'             => __("Total Orders"),
                 'value'             => $totalOrder,
                 'value_type'        => 'number',
@@ -121,6 +110,18 @@ class StatsOverview extends StatsOverviewWidget
                 'url'               => OrderResource::getUrl()."?filters[payment_status][value]=paid"
 
             ],
+            [
+                'label'             => __("Total Categories"),
+                'value'             => $totalCategory,
+                'value_type'        => 'number',
+                'shortDescription'  => __("Product categories"),
+                'description'       => __("Number of product categories used to organize products. Categories help in better product management."),
+                'icon'              => "heroicon-m-tag",
+                'color'             => "warning",
+                'url'               => CategoryResource::getUrl()
+
+            ],
+
 
 
         ];

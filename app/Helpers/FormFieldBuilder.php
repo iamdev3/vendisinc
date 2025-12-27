@@ -13,6 +13,9 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Forms\Components\Checkbox;
+use App\Models\Setting;
+
 
 class FormFieldBuilder
 {
@@ -68,7 +71,10 @@ class FormFieldBuilder
                 ->description($sectionData['description'] ?? '')
                 ->icon($sectionData['icon'] ?? 'heroicon-o-cog-6-tooth')
                 ->iconColor('primary')
-                ->columns($sectionData['columns'] ?? 2)
+                ->columns([
+                    'sm' => 1,  // 1 column on mobile
+                    'md' => 2,  // 2 columns on medium screens and larger
+                ])
                 ->columnSpanFull()
                 ->schema($sectionFields);  // ✅ Pass fields array directly (not wrapped)
 
@@ -84,7 +90,8 @@ class FormFieldBuilder
         // STEP 4: Return complete Tabs component with all tabs
         return Tabs::make("Settings Tabs")
             ->tabs($allTabs)
-            ->vertical()
+            ->extraAttributes(['class' => 'settings-tabs-responsive'])
+            ->vertical(fn() => !str_contains(strtolower(request()->userAgent() ?? ''), 'mobile'))
             ->contained();
     }
 
@@ -261,5 +268,332 @@ class FormFieldBuilder
         };
 
         return $fieldComponent;
+    }
+
+
+    /**
+     * Schema for adding custom fields with dynamic attributes
+     */
+    public static function getAddFieldSchema(): array
+    {
+        return [
+            Section::make('Section Configuration')
+                ->schema([
+                    Radio::make('field_addition_type')
+                        ->label('Add Field To')
+                        ->options([
+                            'existing_section' => 'Existing Section',
+                            'new_section' => 'New Section',
+                        ])
+                        ->default('existing_section')
+                        ->required()
+                        ->live()
+                        ->columnSpanFull(),
+
+                    Select::make('group')
+                        ->label('Select Section')
+                        ->options(Setting::getAvailableSections())
+                        ->required()
+                        ->searchable()
+                        ->visible(fn($get) => $get('field_addition_type') === 'existing_section'),
+
+                    TextInput::make('new_group')
+                        ->label('Section Key')
+                        ->helperText('Lowercase, underscores only (e.g., custom_section)')
+                        ->required()
+                        ->regex('/^[a-z_]+$/')
+                        ->visible(fn($get) => $get('field_addition_type') === 'new_section'),
+
+                    TextInput::make('new_group_title')
+                        ->label('Section Title')
+                        ->required()
+                        ->visible(fn($get) => $get('field_addition_type') === 'new_section'),
+
+                    Textarea::make('new_group_description')
+                        ->label('Section Description')
+                        ->rows(2)
+                        ->visible(fn($get) => $get('field_addition_type') === 'new_section'),
+
+                    TextInput::make('new_group_icon')
+                        ->label('Section Icon')
+                        ->placeholder('heroicon-o-cog-6-tooth')
+                        ->default('heroicon-o-cog-6-tooth')
+                        ->visible(fn($get) => $get('field_addition_type') === 'new_section'),
+                ])
+                ->columns(2),
+
+            Section::make('Basic Field Configuration')
+                ->schema([
+                    TextInput::make('key')
+                        ->label('Field Key')
+                        ->helperText('Lowercase, underscores (e.g., custom_footer_text)')
+                        ->required()
+                        ->unique('settings', 'key')
+                        ->regex('/^[a-z_]+$/')
+                        ->live(debounce: 500),
+
+                    TextInput::make('label')
+                        ->label('Field Label')
+                        ->required(),
+
+                    Select::make('type')
+                        ->label('Field Type')
+                        ->options([
+                            'text' => 'Text Input',
+                            'email' => 'Email',
+                            'password' => 'Password',
+                            'number' => 'Number',
+                            'textarea' => 'Textarea',
+                            'richtext' => 'Rich Text Editor',
+                            'color' => 'Color Picker',
+                            'select' => 'Select Dropdown',
+                            'multi-select' => 'Multi Select',
+                            'toggle' => 'Toggle Switch',
+                            'radio' => 'Radio Buttons',
+                            'image' => 'Image Upload',
+                        ])
+                        ->required()
+                        ->live()
+                        ->searchable()
+                        ->columnSpanFull(),
+
+                    Toggle::make('required')
+                        ->label('Required Field')
+                        ->default(false),
+
+                    Toggle::make('columnSpanFull')
+                        ->label('Full Width')
+                        ->helperText('Field takes full width of the form')
+                        ->default(false),
+                ])
+                ->columns(2),
+
+            // Text Input Specific Attributes
+            Section::make('Text Input Settings')
+                ->schema([
+                    TextInput::make('placeholder')
+                        ->label('Placeholder Text')
+                        ->placeholder('Enter placeholder...'),
+
+                    TextInput::make('prefix_icon')
+                        ->label('Prefix Icon')
+                        ->placeholder('heroicon-o-envelope')
+                        ->helperText('Heroicon name to show before input'),
+
+                    TextInput::make('suffix_icon')
+                        ->label('Suffix Icon')
+                        ->placeholder('heroicon-o-information-circle')
+                        ->helperText('Heroicon name to show after input'),
+
+                    TextInput::make('default')
+                        ->label('Default Value'),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => in_array($get('type'), ['text', 'email', 'password']))
+                ->collapsible(),
+
+            // Number Input Specific Attributes
+            Section::make('Number Input Settings')
+                ->schema([
+                    TextInput::make('placeholder')
+                        ->label('Placeholder Text'),
+
+                    TextInput::make('default')
+                        ->label('Default Value')
+                        ->numeric(),
+
+                    TextInput::make('min')
+                        ->label('Minimum Value')
+                        ->numeric(),
+
+                    TextInput::make('max')
+                        ->label('Maximum Value')
+                        ->numeric(),
+
+                    TextInput::make('step')
+                        ->label('Step')
+                        ->numeric()
+                        ->default(1)
+                        ->helperText('Increment/decrement value'),
+
+                    TextInput::make('prefix_icon')
+                        ->label('Prefix Icon')
+                        ->placeholder('heroicon-o-currency-dollar'),
+                ])
+                ->columns(3)
+                ->visible(fn($get) => $get('type') === 'number')
+                ->collapsible(),
+
+            // Textarea Specific Attributes
+            Section::make('Textarea Settings')
+                ->schema([
+                    TextInput::make('placeholder')
+                        ->label('Placeholder Text'),
+
+                    TextInput::make('rows')
+                        ->label('Number of Rows')
+                        ->numeric()
+                        ->default(3)
+                        ->minValue(2)
+                        ->maxValue(20),
+
+                    TextInput::make('default')
+                        ->label('Default Value'),
+                ])
+                ->columns(3)
+                ->visible(fn($get) => $get('type') === 'textarea')
+                ->collapsible(),
+
+            // Select & Multi-Select Specific Attributes
+            Section::make('Select Field Settings')
+                ->description('Configure dropdown options and behavior')
+                ->schema([
+                    Toggle::make('searchable')
+                        ->label('Searchable')
+                        ->helperText('Allow users to search in options')
+                        ->default(false),
+
+                    Toggle::make('multiple')
+                        ->label('Allow Multiple Selection')
+                        ->default(fn($get) => $get('type') === 'multi-select')
+                        ->disabled(fn($get) => $get('type') === 'multi-select')
+                        ->visible(fn($get) => $get('type') === 'select'),
+
+                    TextInput::make('placeholder')
+                        ->label('Placeholder Text')
+                        ->default('Select an option')
+                        ->columnSpanFull(),
+
+                    Textarea::make('options')
+                        ->label('Options')
+                        ->helperText('Enter one option per line in format: key|Label (e.g., "en|English" or just "English")')
+                        ->placeholder("key1|Label 1\nkey2|Label 2\nkey3|Label 3")
+                        ->required()
+                        ->rows(6)
+                        ->columnSpanFull(),
+
+                    TextInput::make('default')
+                        ->label('Default Selected Value')
+                        ->helperText('Enter the key of default option')
+                        ->columnSpanFull(),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => in_array($get('type'), ['select', 'multi-select']))
+                ->collapsible(),
+
+            // Radio Specific Attributes
+            Section::make('Radio Button Settings')
+                ->schema([
+                    Textarea::make('options')
+                        ->label('Options')
+                        ->helperText('Enter one option per line in format: key|Label (e.g., "yes|Yes" or just "Yes")')
+                        ->placeholder("option1|Option 1\noption2|Option 2\noption3|Option 3")
+                        ->required()
+                        ->rows(5)
+                        ->columnSpanFull(),
+
+                    TextInput::make('default')
+                        ->label('Default Selected Value')
+                        ->helperText('Enter the key of default option'),
+
+                    Toggle::make('inline')
+                        ->label('Display Inline')
+                        ->helperText('Show options horizontally instead of vertically')
+                        ->default(false),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => $get('type') === 'radio')
+                ->collapsible(),
+
+            // Toggle Specific Attributes
+            Section::make('Toggle Settings')
+                ->schema([
+                    Toggle::make('default')
+                        ->label('Default State')
+                        ->helperText('Toggle ON by default')
+                        ->default(false),
+
+                    TextInput::make('on_icon')
+                        ->label('ON Icon')
+                        ->placeholder('heroicon-o-check-circle'),
+
+                    TextInput::make('off_icon')
+                        ->label('OFF Icon')
+                        ->placeholder('heroicon-o-x-circle'),
+
+                    TextInput::make('on_color')
+                        ->label('ON Color')
+                        ->placeholder('success')
+                        ->helperText('success, danger, warning, info, primary'),
+
+                    TextInput::make('off_color')
+                        ->label('OFF Color')
+                        ->placeholder('gray'),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => $get('type') === 'toggle')
+                ->collapsible(),
+
+            // Color Picker Specific Attributes
+            Section::make('Color Picker Settings')
+                ->schema([
+                    TextInput::make('default')
+                        ->label('Default Color')
+                        ->placeholder('#3b82f6')
+                        ->helperText('Hex color code'),
+
+                    Toggle::make('format')
+                        ->label('RGB Format')
+                        ->helperText('Use RGB format instead of HEX')
+                        ->default(false),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => $get('type') === 'color')
+                ->collapsible(),
+
+            // Image Upload Specific Attributes
+            Section::make('Image Upload Settings')
+                ->schema([
+                    TextInput::make('disk')
+                        ->label('Storage Disk')
+                        ->default('public')
+                        ->helperText('public, s3, etc.'),
+
+                    TextInput::make('directory')
+                        ->label('Upload Directory')
+                        ->default('images')
+                        ->helperText('Folder path in storage'),
+
+                    TextInput::make('maxSize')
+                        ->label('Max File Size (KB)')
+                        ->numeric()
+                        ->default(2048)
+                        ->helperText('Maximum upload size in kilobytes'),
+
+                    Toggle::make('multiple')
+                        ->label('Allow Multiple Images')
+                        ->default(false),
+
+                    TextInput::make('imagePreviewHeight')
+                        ->label('Preview Height (px)')
+                        ->numeric()
+                        ->default(250),
+                ])
+                ->columns(2)
+                ->visible(fn($get) => $get('type') === 'image')
+                ->collapsible(),
+
+            // Common Helper Text (for all fields)
+            Section::make('Additional Configuration')
+                ->schema([
+                    Textarea::make('helper_text')
+                        ->label('Helper Text')
+                        ->helperText('Descriptive text shown below the field')
+                        ->rows(2)
+                        ->columnSpanFull(),
+                ])
+                ->collapsible()
+                ->collapsed(),
+        ];
     }
 }

@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Storage;
 use Caresome\FilamentAuthDesigner\AuthDesignerPlugin;
 use Caresome\FilamentAuthDesigner\Enums\AuthLayout;
 use Caresome\FilamentAuthDesigner\Enums\MediaDirection;
+use Filament\Support\Facades\FilamentView;
+use Illuminate\Support\Facades\Blade;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -85,6 +87,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->sidebarCollapsibleOnDesktop()
             ->font('montserrat')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -97,4 +100,36 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ]);
     }
+
+    // public function boot(): void
+    // {
+    //     FilamentView::registerRenderHook(
+    //         'panels::styles.before',
+    //         fn (): string => Blade::render('
+    //             <style>
+    //                 .fi-sidebar {
+    //                     background-color: ' . config('settings.appearance.primary_color', '#f0f0f0') . ' !important;
+    //                 }
+
+    //                 .fi-sidebar-group-label {
+    //                     color: ' .  '#f0f0f0' . ' !important;
+    //                 }
+
+    //                 .fi-sidebar-item-label {
+    //                     color: ' .  '#f0f0f0' . ' !important;
+    //                 }
+
+    //                 .fi-sidebar-item.fi-active.fi-sidebar-item-has-url {
+    //                     text-color: ' .  '#f0f0f0' . ' !important;
+    //                     background-color: color-mix(in srgb, ' . config('settings.appearance.primary_color', '#f0f0f0') . ' 15%, white) !important;
+    //                     border-radius: 0.5rem;
+    //                 }
+
+    //                 .dark .fi-sidebar {
+    //                     background-color: ' . config('settings.appearance.primary_color_dark', '#1f2937') . ' !important;
+    //                 }
+    //             </style>
+    //         ')
+    //     );
+    // }
 }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\TextInput;
@@ -58,7 +59,7 @@ class OrderResource extends Resource
                         Select::make('retailer_id')
                             ->relationship('retailor', 'name')
                             ->preload()
-                            ->live()
+                            ->live(debounce: 500)
                             ->afterStateUpdated(function (Set $set, $state, $operation) {
                                 if ($operation == 'create' && $state) {
                                     $retailorDetails = Retailor::find($state);
@@ -142,15 +143,11 @@ class OrderResource extends Resource
                         Textarea::make('notes')
                             ->label("Note for Retailor")
                             ->rows(3),
-                        // ->columnSpanFull(),
 
                         Textarea::make('internal_notes')
                             ->label("Internal Notes")
                             ->rows(3),
-                        // ->columnSpanFull(),
 
-                        // Status fields - Stack on mobile, inline on desktop
-                        // Group::make([
                         Radio::make('status')
                             ->options(OrderStatus::getOptions())
                             ->inline()
@@ -158,9 +155,7 @@ class OrderResource extends Resource
                             ->columnSpanFull()
                             ->default(OrderStatus::CONFIRMED)
                             ->required(),
-                        // ])->columnSpanFull(),
 
-                        // Group::make([
                         Radio::make('payment_status')
                             ->options([
                                 'pending' => "Pending",
@@ -170,7 +165,6 @@ class OrderResource extends Resource
                             ->inline()
                             ->inlineLabel(false)
                             ->required(),
-                        // ])->columnSpanFull(),
 
                         Select::make('payment_method')
                             ->label("Payment Method")
@@ -253,8 +247,20 @@ class OrderResource extends Resource
 
                 // Order Items - Always full width
                 Section::make('Order Items')
+                    ->headerActions([
+                        Action::make('recalculate_all')
+                            ->label('Recalculate All')
+                            ->icon('heroicon-o-calculator')
+                            ->color('success')
+                            ->size('sm')
+                            ->tooltip('Click if totals seem incorrect')
+                            ->action(function (Set $set, Get $get) {
+                                self::calculateTotals($get('orderItems'), $set, $get);
+                            })
+                    ])
                     ->schema([
                         Repeater::make('orderItems')
+                            ->label(__('Order Items'))
                             ->schema([
                                 Select::make('product_id')
                                     ->label('Product')
@@ -262,7 +268,7 @@ class OrderResource extends Resource
                                     ->required()
                                     ->preload()
                                     ->searchable()
-                                    ->live()
+                                    ->live(debounce: 500)
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         if ($state) {
                                             $product = Product::find($state);
@@ -289,7 +295,7 @@ class OrderResource extends Resource
                                     ->numeric()
                                     ->default(1)
                                     ->required()
-                                    ->live()
+                                    ->live(debounce: 500)
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         $unitPrice = $get('unit_price') ?? 0;
                                         $unitProfit = $get('unit_profit') ?? 0;
@@ -307,8 +313,9 @@ class OrderResource extends Resource
                                 TextInput::make('unit_price')
                                     ->numeric()
                                     ->step(0.01)
+                                    ->label("Unit Price")
                                     ->prefix(config("services.system_params.currency"))
-                                    ->live()
+                                    ->live(debounce: 500)
                                     ->default(0.00)
                                     ->afterStateUpdated(function ($state, $set, $get) {
                                         $quantity = $get('quantity') ?? 1;
@@ -337,6 +344,7 @@ class OrderResource extends Resource
 
                                 TextInput::make('total_price')
                                     ->numeric()
+                                    ->label("Total Price")
                                     ->disabled()
                                     ->dehydrated(true)
                                     ->prefix(config("services.system_params.currency"))
@@ -381,7 +389,7 @@ class OrderResource extends Resource
                             ->addActionLabel('Add Item')
                             ->addActionAlignment(Alignment::Start)
                             ->collapsible()
-                            ->live()
+                            ->live(debounce: 500)
                             ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                 self::calculateTotals($state, $set, $get);
                             }),
@@ -421,7 +429,7 @@ class OrderResource extends Resource
                                 ->maxValue(100)
                                 ->suffix('%')
                                 ->default(0.00)
-                                ->live()
+                                ->live(debounce: 500)
                                 ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                     self::calculateTotals($get('orderItems'), $set, $get);
                                 })
@@ -452,7 +460,7 @@ class OrderResource extends Resource
                                 ->maxValue(100)
                                 ->suffix('%')
                                 ->default(0.00)
-                                ->live()
+                                ->live(debounce: 500)
                                 ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                     self::calculateTotals($get('orderItems'), $set, $get);
                                 })
@@ -749,9 +757,9 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('order_date', '<=', $date),
                             );
                     }),
-              
+
                 ],  layout: FiltersLayout::AboveContentCollapsible)->filtersFormColumns(3)
-            
+
             ->recordActions([
 
                 ViewAction::make()

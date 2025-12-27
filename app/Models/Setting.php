@@ -24,16 +24,16 @@ class Setting extends Model
 
         // Create PHP config file content
         $configContent = "<?php\n\nreturn " . var_export($groupSettings, true) . ";\n";
-        
+
         // Path to config file
         $configPath = config_path('settings.php');
-        
+
         // Write to file
         File::put($configPath, $configContent);
-        
+
         // Update environment variables for mail settings
         self::updateEnvironmentVariables($groupSettings['mail'] ?? []);
-        
+
         // Clear config cache so Laravel picks up the new file
         Artisan::call('config:clear');
 
@@ -44,7 +44,7 @@ class Setting extends Model
             ->send();
 
     }
-    
+
     /**
      * Update environment variables with mail settings
      *
@@ -62,26 +62,26 @@ class Setting extends Model
             'MAIL_PASSWORD',
             'MAIL_FROM_ADDRESS'
         ];
-        
+
         // Get the path to the .env file
         $envPath = base_path('.env');
-        
+
         // Check if .env file exists
         if (!File::exists($envPath)) {
             return;
         }
-        
+
         // Read the current .env content
         $envContent = File::get($envPath);
-        
+
         // Update each mail setting
         foreach ($mailEnvVars as $envVar) {
             if (isset($mailSettings[$envVar])) {
                 $value = $mailSettings[$envVar];
-                
+
                 // Escape special characters in the value
                 $escapedValue = self::escapeEnvValue($value);
-                
+
                 // Check if the variable already exists in .env
                 if (preg_match("/^{$envVar}=.*/m", $envContent)) {
                     // Update existing variable
@@ -96,11 +96,11 @@ class Setting extends Model
                 }
             }
         }
-        
+
         // Write the updated content back to .env file
         File::put($envPath, $envContent);
     }
-    
+
     /**
      * Escape special characters in environment variable values
      *
@@ -112,14 +112,41 @@ class Setting extends Model
         if ($value === null) {
             return '';
         }
-        
+
         // If value contains spaces or special characters, wrap in quotes
         if (preg_match('/\s|[#\$\\"\'`]/', $value)) {
             // Escape double quotes
             $value = str_replace('"', '\"', $value);
             return "\"{$value}\"";
         }
-        
+
         return $value;
     }
+
+
+    /**
+     * Get available sections for settings dropdown (config + custom)
+     */
+    public static function getAvailableSections(): array
+    {
+        $sections = [];
+
+        // From config
+        $configSections = config('app-settings.sections', []);
+        foreach ($configSections as $key => $section) {
+            $sections[$key] = $section['title'] ?? ucfirst(str_replace('_', ' ', $key));
+        }
+
+        // From custom DB groups
+        $customGroups = self::
+            // where('is_custom', true)
+            distinct()
+            ->pluck('group')
+            ->filter()
+            ->mapWithKeys(fn($group) => [$group => ucfirst(str_replace('_', ' ', $group))]);
+
+        return array_merge($sections, $customGroups->toArray());
+    }
+
+
 }

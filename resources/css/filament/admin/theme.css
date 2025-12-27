@@ -1,0 +1,10 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+
+.fi-sidebar {
+    /* background-color: #f0f0f0 !important; Use standard CSS/ */
+    /* Or use Tailwind apply: */
+    /* @apply bg-gray-100 dark:bg-gray-900; */
+}

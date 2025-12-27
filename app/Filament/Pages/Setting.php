@@ -34,8 +34,21 @@ class Setting extends Page
         $this->form->fill($settings);
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('add_setting_field')
+                ->label('Add Setting Field')
+                ->icon('heroicon-o-plus-circle')
+                ->modalWidth('3xl')
+                ->schema(FormFieldBuilder::getAddFieldSchema())
+                ,
+        ];
+    }
+
+
     public function form(Schema $schema): Schema
-    {   
+    {
         #Get all sections from config
         $configSections = config('app-settings.sections');
 
@@ -59,18 +72,18 @@ class Setting extends Page
     /**
      * Build a map of field keys to their group names
      * This allows us to know which group each field belongs to when saving
-     * 
+     *
      * @return array - ['site_name' => 'general_settings', 'smtp_host' => 'mail', ...]
      */
     private function getFieldGroupMap(): array
     {
         static $map = null;
-        
+
         // Build map only once and cache it
         if ($map === null) {
             $map = [];
             $configSections = config('app-settings.sections');
-            
+
             // Loop through each section and its fields
             foreach ($configSections as $groupName => $sectionData) {
                 foreach ($sectionData['fields'] as $fieldConfig) {
@@ -79,7 +92,7 @@ class Setting extends Page
                 }
             }
         }
-        
+
         return $map;
     }
 
